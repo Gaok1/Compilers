@@ -1,0 +1,15 @@
+TP02 - Analisador Léxico 
+
+-- Compilar o lexer (gera CoolLexer.java via JLex e compila tudo) --
+cd /home/gaok1/gitApps/Compilers/lexical
+make lexer
+
+-- Testar com o arquivo de teste padrão (test.cl) --
+./lexer test.cl
+
+-- Testar com outro arquivo --
+./lexer meuteste.cl
+
+-- teste geral
+make dotest
+

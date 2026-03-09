@@ -1,97 +1,72 @@
-(* models one-dimensional cellular automaton on a circle of finite radius
-   arrays are faked as Strings,
-   X's respresent live cells, dots represent dead cells,
-   no error checking is done *)
-class CellularAutomaton inherits IO {
-    population_map : String;
-   
-    init(map : String) : SELF_TYPE {
-        {
-            population_map <- map;
-            self;
-        }
-    };
-   
-    print() : SELF_TYPE {
-        {
-            out_string(population_map.concat("\n"));
-            self;
-        }
-    };
-   
-    num_cells() : Int {
-        population_map.length()
-    };
-   
-    cell(position : Int) : String {
-        population_map.substr(position, 1)
-    };
-   
-    cell_left_neighbor(position : Int) : String {
-        if position = 0 then
-            cell(num_cells() - 1)
-        else
-            cell(position - 1)
-        fi
-    };
-   
-    cell_right_neighbor(position : Int) : String {
-        if position = num_cells() - 1 then
-            cell(0)
-        else
-            cell(position + 1)
-        fi
-    };
-   
-    (* a cell will live if exactly 1 of itself and it's immediate
-       neighbors are alive *)
-    cell_at_next_evolution(position : Int) : String {
-        if (if cell(position) = "X" then 1 else 0 fi
-            + if cell_left_neighbor(position) = "X" then 1 else 0 fi
-            + if cell_right_neighbor(position) = "X" then 1 else 0 fi
-            = 1)
-        then
-            "X"
-        else
-            '.'
-        fi
-    };
-   
-    evolve() : SELF_TYPE {
-        (let position : Int in
-        (let num : Int <- num_cells[] in
-        (let temp : String in
-            {
-                while position < num loop
-                    {
-                        temp <- temp.concat(cell_at_next_evolution(position));
-                        position <- position + 1;
-                    }
-                pool;
-                population_map <- temp;
-                self;
-            }
-        ) ) )
-    };
-};
+-- Arquivo de testes do scanner Cool (TP02)
 
-class Main {
-    cells : CellularAutomaton;
-   
-    main() : SELF_TYPE {
-        {
-            cells <- (new CellularAutomaton).init("         X         ");
-            cells.print();
-            (let countdown : Int <- 20 in
-                while countdown > 0 loop
-                    {
-                        cells.evolve();
-                        cells.print();
-                        countdown <- countdown - 1;
-                    
-                pool
-            );  (* end let countdown
-            self;
-        }
-    };
-};
+-- 1. Keywords em varios cases
+CLASS class Class cLaSs
+ELSE else Else
+FI fi Fi
+IF if If
+IN in In
+INHERITS inherits Inherits
+ISVOID isvoid Isvoid
+LET let Let
+LOOP loop Loop
+POOL pool Pool
+THEN then Then
+WHILE while While
+CASE case Case
+ESAC esac Esac
+NEW new New
+OF of Of
+NOT not Not
+
+-- 2. Booleanos: primeira letra obrigatoriamente minuscula
+true TRUE True tRuE
+false FALSE False fAlSe
+
+-- 3. Inteiros
+0 42 12345 007
+
+-- 4. Identificadores
+myVar _x x1 X1 MyType Object IO
+
+-- 5. Operadores
+x <- 5
+x <= y
+x => y
+x + y - z * w / v
+x < y
+x = y
+~x
+x.method
+(a, b; c: d)
+{e} @ f
+
+-- 6. Strings normais
+"hello world"
+"tab:\there"
+"newline:\nhere"
+"backspace:\bhere"
+"formfeed:\fhere"
+"escaped quote: \""
+"escaped backslash: \\"
+"escaped other: \a \z"
+"escaped newline: \
+continues here"
+
+-- 7. String vazia
+""
+
+-- 8. String muito longa (> 1024 chars)
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+-- 9. String nao terminada (erro)
+-- "string sem fechamento
+
+-- 10. Comentario de bloco simples
+(* comentario simples *)
+
+-- 11. Comentario de bloco aninhado
+(* nivel1 (* nivel2 (* nivel3 *) ainda nivel2 *) ainda nivel1 *)
+
+-- 12. Comentario sem fechamento (EOF in comment)
+(*

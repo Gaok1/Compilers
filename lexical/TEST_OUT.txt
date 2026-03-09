@@ -1,0 +1,129 @@
+./lexer test.cl
+#name "test.cl"
+#4 CLASS
+#4 CLASS
+#4 CLASS
+#4 CLASS
+#5 ELSE
+#5 ELSE
+#5 ELSE
+#6 FI
+#6 FI
+#6 FI
+#7 IF
+#7 IF
+#7 IF
+#8 IN
+#8 IN
+#8 IN
+#9 INHERITS
+#9 INHERITS
+#9 INHERITS
+#10 ISVOID
+#10 ISVOID
+#10 ISVOID
+#11 LET
+#11 LET
+#11 LET
+#12 LOOP
+#12 LOOP
+#12 LOOP
+#13 POOL
+#13 POOL
+#13 POOL
+#14 THEN
+#14 THEN
+#14 THEN
+#15 WHILE
+#15 WHILE
+#15 WHILE
+#16 CASE
+#16 CASE
+#16 CASE
+#17 ESAC
+#17 ESAC
+#17 ESAC
+#18 NEW
+#18 NEW
+#18 NEW
+#19 OF
+#19 OF
+#19 OF
+#20 NOT
+#20 NOT
+#20 NOT
+#23 BOOL_CONST true
+#23 TYPEID TRUE
+#23 TYPEID True
+#23 BOOL_CONST true
+#24 BOOL_CONST false
+#24 TYPEID FALSE
+#24 TYPEID False
+#24 BOOL_CONST false
+#27 INT_CONST 0
+#27 INT_CONST 42
+#27 INT_CONST 12345
+#27 INT_CONST 007
+#30 OBJECTID myVar
+#30 ERROR "_"
+#30 OBJECTID x
+#30 OBJECTID x1
+#30 TYPEID X1
+#30 TYPEID MyType
+#30 TYPEID Object
+#30 TYPEID IO
+#33 OBJECTID x
+#33 ASSIGN
+#33 INT_CONST 5
+#34 OBJECTID x
+#34 LE
+#34 OBJECTID y
+#35 OBJECTID x
+#35 DARROW
+#35 OBJECTID y
+#36 OBJECTID x
+#36 '+'
+#36 OBJECTID y
+#36 '-'
+#36 OBJECTID z
+#36 '*'
+#36 OBJECTID w
+#36 '/'
+#36 OBJECTID v
+#37 OBJECTID x
+#37 '<'
+#37 OBJECTID y
+#38 OBJECTID x
+#38 '='
+#38 OBJECTID y
+#39 '~'
+#39 OBJECTID x
+#40 OBJECTID x
+#40 '.'
+#40 OBJECTID method
+#41 '('
+#41 OBJECTID a
+#41 ','
+#41 OBJECTID b
+#41 ';'
+#41 OBJECTID c
+#41 ':'
+#41 OBJECTID d
+#41 ')'
+#42 '{'
+#42 OBJECTID e
+#42 '}'
+#42 '@'
+#42 OBJECTID f
+#45 STR_CONST "hello world"
+#46 STR_CONST "tab:\there"
+#47 STR_CONST "newline:\nhere"
+#48 STR_CONST "backspace:\bhere"
+#49 STR_CONST "formfeed:\fhere"
+#50 STR_CONST "escaped quote: \""
+#51 STR_CONST "escaped backslash: \\"
+#52 STR_CONST "escaped other: a z"
+#54 STR_CONST "escaped newline: \ncontinues here"
+#57 STR_CONST ""
+#60 STR_CONST "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+#73 ERROR "EOF in comment"
