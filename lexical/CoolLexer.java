@@ -1,5 +1,19 @@
 /*
  *  The scanner definition for COOL.
+ *
+ *  ESTRUTURA DO ARQUIVO:
+ *  Secao 1 (antes do primeiro %%): imports Java
+ *  Secao 2 (entre os dois %%): declaracoes JLex (%class, %state, blocos %{ %}, etc.)
+ *  Secao 3 (apos o segundo %%): regras lexicas (regex + acao Java)
+ *
+ *  IMPORTANTE SOBRE COMENTARIOS NO JLEX:
+ *  - Na secao 1: comentarios de bloco e de linha funcionam normalmente (e codigo Java)
+ *  - Na secao 2: comentarios so funcionam DENTRO de blocos %{ %}, %init{}, %eofval{}
+ *  - Na secao 3: comentarios so funcionam DENTRO das acoes { } das regras
+ *    Comentarios soltos nas secoes 2 e 3 causam erros de parse no JLex.
+ *
+ *  Symbol e a classe do java_cup que representa um token.
+ *  Cada token retornado pelo lexer e um Symbol(tipo) ou Symbol(tipo, valor).
  */
 import java_cup.runtime.Symbol;
 
@@ -15,13 +29,34 @@ class CoolLexer implements java_cup.runtime.Scanner {
 	private final int YY_BOL = 128;
 	private final int YY_EOF = 129;
 
-/*  Stuff enclosed in %{ %} is copied verbatim to the lexer class
- *  definition, all the extra variables/functions you want to use in the
- *  lexer actions should go here.  Don't remove or modify anything that
- *  was there initially.  */
-    // Max size of string constants
+/*
+ * Tudo dentro de %{ %} e copiado literalmente para dentro da classe CoolLexer gerada.
+ * Aqui ficam variaveis de instancia e metodos auxiliares do lexer.
+ *
+ * MAX_STR_CONST: tamanho maximo de uma string constante (bytes, com terminador \0).
+ *   Strings com mais de 1024 chars sao erro lexico em Cool.
+ *
+ * string_buf: buffer para montar o conteudo de uma string char por char
+ *   dentro do estado STRING. StringBuffer e mutavel, por isso e usado aqui.
+ *
+ * curr_lineno: numero da linha atual. Comeca em 1, incrementado a cada \n.
+ *   Usado pelo parser para reportar erros com numero de linha correto.
+ *
+ * filename: nome do arquivo sendo processado, como AbstractSymbol
+ *   (entrada na tabela de strings) para economizar memoria.
+ *
+ * comment_depth: nivel de aninhamento de comentarios de bloco (* ... *).
+ *   Cool permite comentarios aninhados: (* (* *) *) e valido.
+ *   Abre "(*" -> depth++. Fecha "*)" -> depth--. Chega a 0 -> saiu do comentario.
+ *
+ * string_too_long: flag que indica que a string atual ja passou de 1024 chars.
+ *   Quando true, continuamos lendo ate fechar a string, mas retornamos erro.
+ *   Isso evita erros em cascata.
+ *
+ * append_char: tenta adicionar um char ao buffer da string.
+ *   Se ja atingiu o limite, ativa string_too_long em vez de adicionar.
+ */
     static int MAX_STR_CONST = 1025;
-    // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
     private int curr_lineno = 1;
     int get_curr_lineno() {
@@ -77,9 +112,10 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		yy_at_bol = true;
 		yy_lexical_state = YYINITIAL;
 
-/*  Stuff enclosed in %init{ %init} is copied verbatim to the lexer
- *  class constructor, all the extra initialization you want to do should
- *  go here.  Don't remove or modify anything that was there initially. */
+/*
+ * Tudo dentro de %init{ %init} e copiado para o construtor da classe CoolLexer.
+ * Inicializacoes extras do lexer viriam aqui.
+ */
     // empty for now
 	}
 
@@ -503,15 +539,20 @@ class CoolLexer implements java_cup.runtime.Scanner {
 			yy_next_state = yy_nxt[yy_rmap[yy_state]][yy_cmap[yy_lookahead]];
 			if (YY_EOF == yy_lookahead && true == yy_initial) {
 
-/*  Stuff enclosed in %eofval{ %eofval} specifies java code that is
- *  executed when end-of-file is reached.  If you use multiple lexical
- *  states and want to do something special if an EOF is encountered in
- *  one of those states, place your code in the switch statement.
- *  Ultimately, you should return the EOF symbol, or your lexer won't
- *  work.  */
+/*
+ * Tudo dentro de %eofval{ %eofval} e executado quando o lexer atinge o EOF.
+ * Verificamos em qual estado estamos para retornar o erro correto.
+ * yy_lexical_state e uma variavel interna do JLex com o estado atual.
+ *
+ * YYINITIAL: EOF normal, apenas encerra.
+ * COMMENT:   EOF dentro de comentario de bloco — comentario nunca foi fechado.
+ * STRING:    EOF dentro de string — string nunca foi fechada com ".
+ * STRING_ERROR: EOF apos erro de string — ja reportamos o erro antes, apenas encerra.
+ *
+ * Em qualquer caso, ao fim retornamos EOF para sinalizar ao parser.
+ */
     switch(yy_lexical_state) {
     case YYINITIAL:
-	/* nothing special to do in the initial state */
 	break;
     case COMMENT:
         yybegin(YYINITIAL);
@@ -550,11 +591,11 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -2:
 						break;
 					case 2:
-						{ /* ignore whitespace */ }
+						{ /* Whitespace (espaco, tab, form feed, carriage return): ignorado silenciosamente. */ }
 					case -3:
 						break;
 					case 3:
-						{ curr_lineno++; }
+						{ curr_lineno++; /* Newline: nao retorna token, apenas incrementa o contador de linhas. */ }
 					case -4:
 						break;
 					case 4:
@@ -562,7 +603,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -5:
 						break;
 					case 5:
-						{ return new Symbol(TokenConstants.ERROR, yytext()); }
+						{ return new Symbol(TokenConstants.ERROR, yytext()); /* Catch-all: qualquer char invalido vira um token ERROR. DEVE ser a ultima regra — tudo valido ja foi tratado acima. */ }
 					case -6:
 						break;
 					case 6:
@@ -578,30 +619,30 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -9:
 						break;
 					case 9:
-						{ string_buf.setLength(0); string_too_long = false; yybegin(STRING); }
+						{ string_buf.setLength(0); string_too_long = false; yybegin(STRING); /* Abre uma string: limpa o buffer, reseta flag de erro, entra no estado STRING para ler char a char. */ }
 					case -10:
 						break;
 					case 10:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -11:
 						break;
 					case 11:
 						{ return new Symbol(TokenConstants.INT_CONST,
-                                     AbstractTable.inttable.addString(yytext())); }
+                                     AbstractTable.inttable.addString(yytext())); /* Inteiro: sequencia de digitos. O valor e guardado como String em inttable para que o parser recupere depois. yytext() retorna o texto casado, ex: "42". */ }
 					case -12:
 						break;
 					case 12:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -13:
 						break;
 					case 13:
-						{ return new Symbol(TokenConstants.LT); }
+						{ return new Symbol(TokenConstants.LT);     /* menor que */ }
 					case -14:
 						break;
 					case 14:
-						{ return new Symbol(TokenConstants.EQ); }
+						{ return new Symbol(TokenConstants.EQ);     /* igualdade */ }
 					case -15:
 						break;
 					case 15:
@@ -613,11 +654,11 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -17:
 						break;
 					case 17:
-						{ return new Symbol(TokenConstants.NEG); }
+						{ return new Symbol(TokenConstants.NEG);    /* negacao inteira: ~x equivale a -x em Cool */ }
 					case -18:
 						break;
 					case 18:
-						{ return new Symbol(TokenConstants.DOT); }
+						{ return new Symbol(TokenConstants.DOT);    /* acesso a metodo: obj.metodo() */ }
 					case -19:
 						break;
 					case 19:
@@ -629,7 +670,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -21:
 						break;
 					case 21:
-						{ return new Symbol(TokenConstants.COLON); }
+						{ return new Symbol(TokenConstants.COLON);  /* separador de tipo: x : Int */ }
 					case -22:
 						break;
 					case 22:
@@ -641,19 +682,19 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -24:
 						break;
 					case 24:
-						{ return new Symbol(TokenConstants.AT); }
+						{ return new Symbol(TokenConstants.AT);     /* dispatch estatico: obj@Tipo.metodo() */ }
 					case -25:
 						break;
 					case 25:
-						{ /* ignore line comment */ }
+						{ /* Comentario de linha: "--" seguido de tudo ate o fim da linha. [^\n]* = zero ou mais chars que nao sao newline. O \n em si nao e consumido aqui — a regra de \n acima cuida dele. */ }
 					case -26:
 						break;
 					case 26:
-						{ comment_depth = 1; yybegin(COMMENT); }
+						{ comment_depth = 1; yybegin(COMMENT); /* Inicia comentario de bloco. Profundidade comeca em 1. Muda para estado COMMENT. */ }
 					case -27:
 						break;
 					case 27:
-						{ return new Symbol(TokenConstants.ERROR, "Unmatched *)"); }
+						{ return new Symbol(TokenConstants.ERROR, "Unmatched *)"); /* "*)" fora de comentario: erro lexico. */ }
 					case -28:
 						break;
 					case 28:
@@ -673,15 +714,15 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -32:
 						break;
 					case 32:
-						{ return new Symbol(TokenConstants.ASSIGN); }
+						{ return new Symbol(TokenConstants.ASSIGN); /* atribuicao: x <- 5 */ }
 					case -33:
 						break;
 					case 33:
-						{ return new Symbol(TokenConstants.LE); }
+						{ return new Symbol(TokenConstants.LE);     /* menor ou igual. Vem antes de "<" para que "<=" nao seja lido como "<" + "=". */ }
 					case -34:
 						break;
 					case 34:
-						{ return new Symbol(TokenConstants.DARROW); }
+						{ return new Symbol(TokenConstants.DARROW); /* seta de case: of Int => ... */ }
 					case -35:
 						break;
 					case 35:
@@ -701,7 +742,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -39:
 						break;
 					case 39:
-						{ return new Symbol(TokenConstants.BOOL_CONST, Boolean.TRUE); }
+						{ return new Symbol(TokenConstants.BOOL_CONST, Boolean.TRUE);  /* Booleano true: primeira letra OBRIGATORIAMENTE minuscula. Ex: true, tRuE, tRUE -> BOOL_CONST. True, TRUE -> TYPEID (identificador de tipo). */ }
 					case -40:
 						break;
 					case 40:
@@ -725,11 +766,11 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -45:
 						break;
 					case 45:
-						{ return new Symbol(TokenConstants.BOOL_CONST, Boolean.FALSE); }
+						{ return new Symbol(TokenConstants.BOOL_CONST, Boolean.FALSE); /* Booleano false: mesma regra — primeiro char deve ser 'f' minusculo. */ }
 					case -46:
 						break;
 					case 46:
-						{ return new Symbol(TokenConstants.CLASS); }
+						{ return new Symbol(TokenConstants.CLASS);    /* Keywords: case-insensitive em Cool. [cC] casa 'c' ou 'C', etc. Ficam ANTES dos identificadores para ter precedencia — se o texto for "class", esta regra casa antes da regra de OBJECTID. */ }
 					case -47:
 						break;
 					case 47:
@@ -745,93 +786,97 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -50:
 						break;
 					case 50:
-						{ curr_lineno++; }
+						{ curr_lineno++; /* Conta linhas mesmo dentro de comentarios. */ }
 					case -51:
 						break;
 					case 51:
-						{ /* ignore */ }
+						{ /* Qualquer outro char dentro do comentario e ignorado. "." casa qualquer char exceto \n. */ }
 					case -52:
 						break;
 					case 52:
-						{ comment_depth++; }
+						{ comment_depth++; /* Comentario aninhado: incrementa a profundidade. Cool suporta aninhamento. */ }
 					case -53:
 						break;
 					case 53:
-						{ if (--comment_depth == 0) yybegin(YYINITIAL); }
+						{ if (--comment_depth == 0) yybegin(YYINITIAL); /* Fecha um nivel. Se chegou a 0, voltamos ao estado normal. */ }
 					case -54:
 						break;
 					case 54:
 						{ curr_lineno++; yybegin(YYINITIAL);
-                                 return new Symbol(TokenConstants.ERROR, "Unterminated string constant"); }
+                          return new Symbol(TokenConstants.ERROR, "Unterminated string constant"); /* Newline real sem escape dentro de string: erro. A string nao foi fechada corretamente. */ }
 					case -55:
 						break;
 					case 55:
-						{ append_char(yytext().charAt(0)); }
+						{ append_char(yytext().charAt(0)); /* Char normal: adiciona ao buffer. yytext().charAt(0) pega o unico char casado pelo ".". */ }
 					case -56:
 						break;
 					case 56:
-						{ if (string_too_long) {
-                                     yybegin(YYINITIAL);
-                                     return new Symbol(TokenConstants.ERROR, "String constant too long");
-                                 }
-                                 yybegin(YYINITIAL);
-                                 return new Symbol(TokenConstants.STR_CONST,
-                                     AbstractTable.stringtable.addString(string_buf.toString())); }
+						{ /* Fecha a string com ".
+                           * Se estava muito longa: retorna erro.
+                           * Caso contrario: adiciona a string a tabela stringtable e retorna STR_CONST.
+                           * AbstractTable.stringtable faz "interning": strings iguais compartilham o mesmo objeto na memoria. */
+                          if (string_too_long) {
+                              yybegin(YYINITIAL);
+                              return new Symbol(TokenConstants.ERROR, "String constant too long");
+                          }
+                          yybegin(YYINITIAL);
+                          return new Symbol(TokenConstants.STR_CONST,
+                              AbstractTable.stringtable.addString(string_buf.toString())); }
 					case -57:
 						break;
 					case 57:
 						{ yybegin(STRING_ERROR);
-                                 return new Symbol(TokenConstants.ERROR, "String contains null character"); }
+                          return new Symbol(TokenConstants.ERROR, "String contains null character"); /* Null byte real dentro de string: erro. Muda para STRING_ERROR para consumir o resto sem reportar novos erros. */ }
 					case -58:
 						break;
 					case 58:
-						{ curr_lineno++; append_char('\n'); }
+						{ curr_lineno++; append_char('\n'); /* Escape de newline: "\" seguido de \n real. Permite strings multi-linha com \ no final da linha. Conta a linha e adiciona \n ao conteudo. */ }
 					case -59:
 						break;
 					case 59:
-						{ append_char(yytext().charAt(1)); }
+						{ append_char(yytext().charAt(1)); /* Qualquer outro escape \x -> o proprio char x. Ex: \a->'a', \\->'\\'. yytext().charAt(1) pega o char apos a barra. */ }
 					case -60:
 						break;
 					case 60:
-						{ append_char('\b'); }
+						{ append_char('\b'); /* \b -> backspace */ }
 					case -61:
 						break;
 					case 61:
-						{ append_char('\t'); }
+						{ append_char('\t'); /* \t -> tab */ }
 					case -62:
 						break;
 					case 62:
-						{ append_char('\n'); }
+						{ append_char('\n'); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
 					case -63:
 						break;
 					case 63:
-						{ append_char('\f'); }
+						{ append_char('\f'); /* \f -> form feed */ }
 					case -64:
 						break;
 					case 64:
-						{ append_char('0'); }
+						{ append_char('0');  /* \0 escapado -> char '0' (nao null byte). Comportamento definido pela spec do Cool. */ }
 					case -65:
 						break;
 					case 65:
-						{ curr_lineno++; yybegin(YYINITIAL); }
+						{ curr_lineno++; yybegin(YYINITIAL); /* Newline tambem encerra a string com erro. */ }
 					case -66:
 						break;
 					case 66:
-						{ /* ignore */ }
+						{ /* Qualquer outro char apos o erro na string e ignorado silenciosamente. */ }
 					case -67:
 						break;
 					case 67:
-						{ yybegin(YYINITIAL); }
+						{ yybegin(YYINITIAL); /* Fecha a string com erro: volta ao estado normal sem retornar token. */ }
 					case -68:
 						break;
 					case 69:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -69:
 						break;
 					case 70:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -70:
 						break;
 					case 71:
@@ -887,7 +932,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -83:
 						break;
 					case 84:
-						{ return new Symbol(TokenConstants.CLASS); }
+						{ return new Symbol(TokenConstants.CLASS);    /* Keywords: case-insensitive em Cool. [cC] casa 'c' ou 'C', etc. Ficam ANTES dos identificadores para ter precedencia — se o texto for "class", esta regra casa antes da regra de OBJECTID. */ }
 					case -84:
 						break;
 					case 85:
@@ -903,430 +948,430 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -87:
 						break;
 					case 88:
-						{ /* ignore */ }
+						{ /* Qualquer outro char dentro do comentario e ignorado. "." casa qualquer char exceto \n. */ }
 					case -88:
 						break;
 					case 89:
-						{ append_char(yytext().charAt(0)); }
+						{ append_char(yytext().charAt(0)); /* Char normal: adiciona ao buffer. yytext().charAt(0) pega o unico char casado pelo ".". */ }
 					case -89:
 						break;
 					case 91:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -90:
 						break;
 					case 92:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -91:
 						break;
 					case 93:
-						{ /* ignore */ }
+						{ /* Qualquer outro char dentro do comentario e ignorado. "." casa qualquer char exceto \n. */ }
 					case -92:
 						break;
 					case 95:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -93:
 						break;
 					case 96:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -94:
 						break;
 					case 97:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -95:
 						break;
 					case 98:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -96:
 						break;
 					case 99:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -97:
 						break;
 					case 100:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -98:
 						break;
 					case 101:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -99:
 						break;
 					case 102:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -100:
 						break;
 					case 103:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -101:
 						break;
 					case 104:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -102:
 						break;
 					case 105:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -103:
 						break;
 					case 106:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -104:
 						break;
 					case 107:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -105:
 						break;
 					case 108:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -106:
 						break;
 					case 109:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -107:
 						break;
 					case 110:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -108:
 						break;
 					case 111:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -109:
 						break;
 					case 112:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -110:
 						break;
 					case 113:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -111:
 						break;
 					case 114:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -112:
 						break;
 					case 115:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -113:
 						break;
 					case 116:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -114:
 						break;
 					case 117:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -115:
 						break;
 					case 118:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -116:
 						break;
 					case 119:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -117:
 						break;
 					case 120:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -118:
 						break;
 					case 121:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -119:
 						break;
 					case 122:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -120:
 						break;
 					case 123:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -121:
 						break;
 					case 124:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -122:
 						break;
 					case 125:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -123:
 						break;
 					case 126:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -124:
 						break;
 					case 127:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -125:
 						break;
 					case 128:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -126:
 						break;
 					case 129:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -127:
 						break;
 					case 130:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -128:
 						break;
 					case 131:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -129:
 						break;
 					case 132:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -130:
 						break;
 					case 133:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -131:
 						break;
 					case 134:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -132:
 						break;
 					case 135:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -133:
 						break;
 					case 136:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -134:
 						break;
 					case 137:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -135:
 						break;
 					case 138:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -136:
 						break;
 					case 139:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -137:
 						break;
 					case 140:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -138:
 						break;
 					case 141:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -139:
 						break;
 					case 142:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -140:
 						break;
 					case 143:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -141:
 						break;
 					case 144:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -142:
 						break;
 					case 145:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -143:
 						break;
 					case 146:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -144:
 						break;
 					case 147:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -145:
 						break;
 					case 148:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -146:
 						break;
 					case 149:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -147:
 						break;
 					case 150:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -148:
 						break;
 					case 151:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -149:
 						break;
 					case 152:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -150:
 						break;
 					case 153:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -151:
 						break;
 					case 154:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -152:
 						break;
 					case 155:
 						{ return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -153:
 						break;
 					case 156:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -154:
 						break;
 					case 157:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -155:
 						break;
 					case 158:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -156:
 						break;
 					case 159:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -157:
 						break;
 					case 160:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -158:
 						break;
 					case 161:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -159:
 						break;
 					case 162:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -160:
 						break;
 					case 163:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -161:
 						break;
 					case 164:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -162:
 						break;
 					case 165:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -163:
 						break;
 					case 166:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -164:
 						break;
 					case 167:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -165:
 						break;
 					case 168:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -166:
 						break;
 					case 169:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -167:
 						break;
 					case 170:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -168:
 						break;
 					case 171:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -169:
 						break;
 					case 172:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -170:
 						break;
 					case 173:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -171:
 						break;
 					case 174:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -172:
 						break;
 					case 175:
 						{ return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -173:
 						break;
 					default:
