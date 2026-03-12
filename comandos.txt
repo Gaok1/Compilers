@@ -1,0 +1,19 @@
+TP02 - Analisador Léxico 
+
+-- Compilar o lexer (gera CoolLexer.java via JLex e compila tudo)
+gmake lexer
+
+-- Testar com o arquivo de teste padrão (test.cl) --
+./lexer test.cl
+
+-- Testar com outro arquivo --
+./lexer meuteste.cl
+
+-- teste geral
+gmake dotest
+
+-- clean classes
+gmake clean
+
+-- Rodar o nosso analizador lexo no arquivo mycoolc
+coolc mycoolc
