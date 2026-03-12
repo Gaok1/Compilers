@@ -1,0 +1,63 @@
+1 -
+
+Quando um caractere inválido (um que não pode iniciar nenhuma token) for encontrado, um string
+contendo apenas esse caractere deve ser retornado como string de erro. Retomar a análise léxica no
+caractere seguinte.
+Se um string contiver uma nova linha sem caractere de escape, deve-se reportar esse erro como
+“Unterminated string constant” e retomar a análise léxica no início da próxima linha – na suposição
+de que o programador simplesmente esqueceu de fechar/terminar o string.
+
+exemplo:
+"This \
+is OK"
+
+"This is not
+OK" 
+2 - 
+
+Quando um string é muito longo, relatar o erro como “String constant too long” no string de erro
+do token ERROR. Se o string contiver caracteres inválidos (isto é, o caractere nulo), relatar isso como “String contains null character”. Em ambos os casos, a análise léxica deve continuar após o final
+do string, sendo o final do string definido como
+o início da próxima linha se uma nova linha sem caractere de escape ocorrer após esses erros serem
+encontrados; ou
+após as aspas (”) de fechamento, caso contrário.
+ 
+Tupac — Ontem às 20:52
+3 -
+
+Se um comentário permanecer aberto quando o EOF for encontrado, relatar este erro com a mensagem
+“EOF in comment”. Não se deve “tokenizar ” o conteúdo do comentário simplesmente porque
+o terminador está faltando. De forma análoga para os strings, se um EOF for encontrado antes de
+seu fechamento, relatar este erro como “EOF in string constant”.
+4 -
+
+Se você encontrar “)” fora de um comentário, relatar este erro como “Unmatched)”, ao invés de
+representá-lo como * e ). E a forma contrária também como o (*
+Tupac — Ontem às 21:04
+5 -
+
+.                               { /* This rule should be the very last
+                                     in your lexical specification and
+                                     will match match everything not
+                                     matched by other lexical rules. */
+                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+
+COmpare pra ver se essa regra é realmente a ultima
+Tupac — Ontem às 21:31
+se pa isso eh problema do windows, mas tem como fazer ele rodar tanto em windows quanto em linux com isso
+
+<STRING>\(\r?\n) { curr_lineno++; append_char('\n'); }
+
+só subistituir a regra de \\n
+6 -
+
+
+(* comentario de bloco \
+   com multiplas linhas \
+   deve contar linhas corretamente )
+
+-- comentario de bloco com conteudo especial
+( contém "strings", <- operadores, 123 numeros *)
+
+
+da errado, ambos os casos 

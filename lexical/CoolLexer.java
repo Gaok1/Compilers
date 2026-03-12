@@ -128,7 +128,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		0,
 		68,
 		90,
-		94
+		97
 	};
 	private void yybegin (int state) {
 		yy_lexical_state = state;
@@ -366,7 +366,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 94 */ YY_NOT_ACCEPT,
 		/* 95 */ YY_NO_ANCHOR,
 		/* 96 */ YY_NO_ANCHOR,
-		/* 97 */ YY_NO_ANCHOR,
+		/* 97 */ YY_NOT_ACCEPT,
 		/* 98 */ YY_NO_ANCHOR,
 		/* 99 */ YY_NO_ANCHOR,
 		/* 100 */ YY_NO_ANCHOR,
@@ -444,7 +444,8 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 172 */ YY_NO_ANCHOR,
 		/* 173 */ YY_NO_ANCHOR,
 		/* 174 */ YY_NO_ANCHOR,
-		/* 175 */ YY_NO_ANCHOR
+		/* 175 */ YY_NO_ANCHOR,
+		/* 176 */ YY_NO_ANCHOR
 	};
 	private int yy_cmap[] = unpackFromString(1,130,
 "16,4:8,8,2,4,8,1,4:18,8,4,9,4:5,5,7,6,55,59,3,58,56,15,34:9,61,60,52,53,54," +
@@ -452,69 +453,69 @@ class CoolLexer implements java_cup.runtime.Scanner {
 ":3,4,10,4:2,50,4,19,11,17,30,21,14,51,25,23,51:2,18,51,13,29,31,51,26,20,12" +
 ",33,28,32,51:3,62,4,63,57,4,0:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,176,
+	private int yy_rmap[] = unpackFromString(1,177,
 "0,1,2,1,3,1,4,5,1:2,6,7,8,9,10,1:10,11,1:2,6,12,6:2,1:3,6:15,1:18,13,14,15," +
 "16,17,16:15,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38," +
 "39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63," +
-"64,65,66,67,68,69,70,71,72,16,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87," +
-"88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104")[0];
+"64,65,66,67,68,69,70,71,72,73,16,74,75,76,77,78,79,80,81,82,83,84,85,86,87," +
+"88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105")[0];
 
-	private int yy_nxt[][] = unpackFromString(105,65,
-"1,2,3,4,5,6,7,8,2,9,5,10,163,136,69,11,5,164,142,10:2,165,12,91,70,10:2,137" +
-",10,95,10,166,172,10,11,143:2,147,143,149,143,92,151,96,153,143:4,155,5,10," +
+	private int yy_nxt[][] = unpackFromString(106,65,
+"1,2,3,4,5,6,7,8,2,9,5,10,164,137,69,11,5,165,143,10:2,166,12,91,70,10:2,138" +
+",10,95,10,167,173,10,11,144:2,148,144,150,144,92,152,96,154,144:4,156,5,10," +
 "13,14,5,15,16,17,18,19,20,21,22,23,24,-1:66,2,-1:6,2,-1:59,25,-1:67,26,-1:6" +
-"5,27,-1:68,10:5,-1,10:35,-1:28,11,-1:18,11,-1:41,143:5,-1,143:6,71,143:17,7" +
-"1,143:10,-1:16,32,-1:49,33,-1:65,34,-1:11,25,-1,25:62,-1:11,10:5,-1,10:8,17" +
-"5,10:14,175,10:11,-1:13,1,-1,50,51:2,88,93,51:58,-1:11,10:5,-1,10:2,167,10:" +
-"3,28,10:11,167,10:5,28,10:10,-1:24,143:5,-1,143:4,98,143:7,100,143:9,98,143" +
-":3,100,143:8,-1:24,143:5,-1,143:35,-1:24,143:5,-1,143:8,124,143:14,124,143:" +
-"11,-1:19,52,-1:60,58,59:8,60,61,62,63,64,59:49,1,-1,54,55:6,56,89,55:5,57,5" +
-"5:48,-1:11,10:2,29,30,10,-1,10:3,173,10,30,10,29,10:21,173,10:5,-1:24,143:2" +
-",72,73,143,-1,143:3,108,143,73,143,72,143:21,108,143:5,-1:20,53,-1:57,1,-1," +
-"65,66:6,67,66:55,-1:11,10:3,31,10,-1,10:5,31,10:29,-1:24,143:3,74,143,-1,14" +
-"3:5,74,143:29,-1:24,10:5,-1,10:15,35,10:16,35,10:2,-1:24,143:5,-1,143:15,75" +
-",143:16,75,143:2,-1:24,10,36,10:3,-1,10:10,36,10:24,-1:24,143,76,143:3,-1,1" +
-"43:10,76,143:24,-1:24,10,37,10:3,-1,10:10,37,10:24,-1:24,143:5,-1,143:4,116" +
-",143:17,116,143:12,-1:24,10:2,38,10:2,-1,10:7,38,10:27,-1:24,143:5,-1,143:2" +
-",144,143:15,144,143:16,-1:24,10:5,-1,10:4,39,10:17,39,10:12,-1:24,143:5,-1," +
-"143:3,118,143:25,118,143:5,-1:24,10:5,-1,10:4,40,10:17,40,10:12,-1:24,143:5" +
-",-1,143:11,145,143:19,145,143:3,-1:24,10:5,-1,10:14,41,10:12,41,10:7,-1:24," +
-"143,77,143:3,-1,143:10,77,143:24,-1:24,10:5,-1,10:4,42,10:17,42,10:12,-1:24" +
-",143:5,-1,143:12,126,143:13,126,143:8,-1:24,10:5,-1,43,10:19,43,10:14,-1:24" +
-",143:5,-1,143:6,128,143:17,128,143:10,-1:24,10:5,-1,10,44,10:23,44,10:9,-1:" +
-"24,143:2,78,143:2,-1,143:7,78,143:27,-1:24,10:5,-1,10:4,45,10:17,45,10:12,-" +
-"1:24,143:5,-1,143:4,79,143:17,79,143:12,-1:24,10:5,-1,10:3,46,10:25,46,10:5" +
-",-1:24,143:5,-1,143:4,81,143:17,81,143:12,-1:24,10:5,-1,10:4,47,10:17,47,10" +
-":12,-1:24,143:5,-1,82,143:19,82,143:14,-1:24,10:5,-1,10:13,48,10:7,48,10:13" +
-",-1:24,143:5,-1,143:4,130,143:17,130,143:12,-1:24,10:5,-1,10:3,49,10:25,49," +
-"10:5,-1:24,143:5,-1,143:14,80,143:12,80,143:7,-1:24,143:5,-1,143,83,143:23," +
-"83,143:9,-1:24,143:5,-1,143,132,143:23,132,143:9,-1:24,143:5,-1,143:3,84,14" +
-"3:25,84,143:5,-1:24,143:5,-1,143:9,141,143:18,141,143:6,-1:24,143:5,-1,143:" +
-"6,133,143:17,133,143:10,-1:24,143:5,-1,143:4,85,143:17,85,143:12,-1:24,143:" +
-"5,-1,143:13,86,143:7,86,143:13,-1:24,143,135,143:3,-1,143:10,135,143:24,-1:" +
-"24,143:5,-1,143:3,87,143:25,87,143:5,-1:24,10:5,-1,10:4,97,10:7,99,10:9,97," +
-"10:3,99,10:8,-1:24,143:5,-1,143:8,102,143:14,102,143:11,-1:24,143:5,-1,143:" +
-"2,122,143:15,122,143:16,-1:24,143:5,-1,143:3,120,143:25,120,143:5,-1:24,143" +
-":5,-1,143:12,127,143:13,127,143:8,-1:24,143:5,-1,143:6,134,143:17,134,143:1" +
-"0,-1:24,10:5,-1,10:4,101,10:7,152,10:9,101,10:3,152,10:8,-1:24,143:5,-1,143" +
-":3,129,143:25,129,143:5,-1:24,143:5,-1,143:12,131,143:13,131,143:8,-1:24,10" +
-":5,-1,10:4,103,10:17,103,10:12,-1:24,143:5,-1,143,104,106,143:15,106,143:6," +
-"104,143:9,-1:24,10:5,-1,10:16,105,10:13,105,10:4,-1:24,143:5,-1,143,139,143" +
-",138,143:21,139,143:3,138,143:5,-1:24,10:5,-1,10:3,107,10:25,107,10:5,-1:24" +
-",143:5,-1,143:4,110,143:7,112,143:9,110,143:3,112,143:8,-1:24,10:5,-1,10:12" +
-",109,10:13,109,10:8,-1:24,143:5,-1,143:12,140,143:13,140,143:8,-1:24,10:5,-" +
-"1,10:3,111,10:25,111,10:5,-1:24,143:5,-1,143:8,114,143:14,114,143:11,-1:24," +
-"10:5,-1,10:2,113,10:15,113,10:16,-1:24,10:5,-1,10:12,115,10:13,115,10:8,-1:" +
-"24,10:5,-1,10:3,117,10:25,117,10:5,-1:24,10:5,-1,10:3,119,10:25,119,10:5,-1" +
-":24,10:5,-1,10,121,10:23,121,10:9,-1:24,10:5,-1,10:6,123,10:17,123,10:10,-1" +
-":24,10,125,10:3,-1,10:10,125,10:24,-1:24,10:5,-1,10:8,146,148,10:13,146,10:" +
-"4,148,10:6,-1:24,10:5,-1,10,168,150,10:15,150,10:6,168,10:9,-1:24,10:5,-1,1" +
-"0,154,10,156,10:21,154,10:3,156,10:5,-1:24,10:5,-1,10:12,157,10:13,157,10:8" +
-",-1:24,10:5,-1,10,158,10:23,158,10:9,-1:24,10:5,-1,10:2,159,10:15,159,10:16" +
-",-1:24,10:5,-1,10:6,160,10:17,160,10:10,-1:24,10:5,-1,10:12,161,10:13,161,1" +
-"0:8,-1:24,10:5,-1,10:6,162,10:17,162,10:10,-1:24,10:5,-1,10:8,169,10:14,169" +
-",10:11,-1:24,10:5,-1,10:11,170,10:19,170,10:3,-1:24,10:5,-1,10:9,171,10:18," +
-"171,10:6,-1:24,10:5,-1,10:4,174,10:17,174,10:12,-1:13");
+"5,27,-1:68,10:5,-1,10:35,-1:28,11,-1:18,11,-1:41,144:5,-1,144:6,71,144:17,7" +
+"1,144:10,-1:16,32,-1:49,33,-1:65,34,-1:11,25,-1,25:62,-1:11,10:5,-1,10:8,17" +
+"6,10:14,176,10:11,-1:13,1,-1,50,51:2,88,93,51:58,-1:11,10:5,-1,10:2,168,10:" +
+"3,28,10:11,168,10:5,28,10:10,-1:24,144:5,-1,144:4,99,144:7,101,144:9,99,144" +
+":3,101,144:8,-1:24,144:5,-1,144:35,-1:24,144:5,-1,144:8,125,144:14,125,144:" +
+"11,-1:19,52,-1:59,94,58,59:8,60,61,62,63,64,59:49,1,-1,54,55:6,56,89,55:5,5" +
+"7,55:48,-1:11,10:2,29,30,10,-1,10:3,174,10,30,10,29,10:21,174,10:5,-1:24,14" +
+"4:2,72,73,144,-1,144:3,109,144,73,144,72,144:21,109,144:5,-1:20,53,-1:59,58" +
+",-1:73,10:3,31,10,-1,10:5,31,10:29,-1:24,144:3,74,144,-1,144:5,74,144:29,-1" +
+":13,1,-1,65,66:6,67,66:55,-1:11,10:5,-1,10:15,35,10:16,35,10:2,-1:24,144:5," +
+"-1,144:15,75,144:16,75,144:2,-1:24,10,36,10:3,-1,10:10,36,10:24,-1:24,144,7" +
+"6,144:3,-1,144:10,76,144:24,-1:24,10,37,10:3,-1,10:10,37,10:24,-1:24,144:5," +
+"-1,144:4,117,144:17,117,144:12,-1:24,10:2,38,10:2,-1,10:7,38,10:27,-1:24,14" +
+"4:5,-1,144:2,145,144:15,145,144:16,-1:24,10:5,-1,10:4,39,10:17,39,10:12,-1:" +
+"24,144:5,-1,144:3,119,144:25,119,144:5,-1:24,10:5,-1,10:4,40,10:17,40,10:12" +
+",-1:24,144:5,-1,144:11,146,144:19,146,144:3,-1:24,10:5,-1,10:14,41,10:12,41" +
+",10:7,-1:24,144,77,144:3,-1,144:10,77,144:24,-1:24,10:5,-1,10:4,42,10:17,42" +
+",10:12,-1:24,144:5,-1,144:12,127,144:13,127,144:8,-1:24,10:5,-1,43,10:19,43" +
+",10:14,-1:24,144:5,-1,144:6,129,144:17,129,144:10,-1:24,10:5,-1,10,44,10:23" +
+",44,10:9,-1:24,144:2,78,144:2,-1,144:7,78,144:27,-1:24,10:5,-1,10:4,45,10:1" +
+"7,45,10:12,-1:24,144:5,-1,144:4,79,144:17,79,144:12,-1:24,10:5,-1,10:3,46,1" +
+"0:25,46,10:5,-1:24,144:5,-1,144:4,81,144:17,81,144:12,-1:24,10:5,-1,10:4,47" +
+",10:17,47,10:12,-1:24,144:5,-1,82,144:19,82,144:14,-1:24,10:5,-1,10:13,48,1" +
+"0:7,48,10:13,-1:24,144:5,-1,144:4,131,144:17,131,144:12,-1:24,10:5,-1,10:3," +
+"49,10:25,49,10:5,-1:24,144:5,-1,144:14,80,144:12,80,144:7,-1:24,144:5,-1,14" +
+"4,83,144:23,83,144:9,-1:24,144:5,-1,144,133,144:23,133,144:9,-1:24,144:5,-1" +
+",144:3,84,144:25,84,144:5,-1:24,144:5,-1,144:9,142,144:18,142,144:6,-1:24,1" +
+"44:5,-1,144:6,134,144:17,134,144:10,-1:24,144:5,-1,144:4,85,144:17,85,144:1" +
+"2,-1:24,144:5,-1,144:13,86,144:7,86,144:13,-1:24,144,136,144:3,-1,144:10,13" +
+"6,144:24,-1:24,144:5,-1,144:3,87,144:25,87,144:5,-1:24,10:5,-1,10:4,98,10:7" +
+",100,10:9,98,10:3,100,10:8,-1:24,144:5,-1,144:8,103,144:14,103,144:11,-1:24" +
+",144:5,-1,144:2,123,144:15,123,144:16,-1:24,144:5,-1,144:3,121,144:25,121,1" +
+"44:5,-1:24,144:5,-1,144:12,128,144:13,128,144:8,-1:24,144:5,-1,144:6,135,14" +
+"4:17,135,144:10,-1:24,10:5,-1,10:4,102,10:7,153,10:9,102,10:3,153,10:8,-1:2" +
+"4,144:5,-1,144:3,130,144:25,130,144:5,-1:24,144:5,-1,144:12,132,144:13,132," +
+"144:8,-1:24,10:5,-1,10:4,104,10:17,104,10:12,-1:24,144:5,-1,144,105,107,144" +
+":15,107,144:6,105,144:9,-1:24,10:5,-1,10:16,106,10:13,106,10:4,-1:24,144:5," +
+"-1,144,140,144,139,144:21,140,144:3,139,144:5,-1:24,10:5,-1,10:3,108,10:25," +
+"108,10:5,-1:24,144:5,-1,144:4,111,144:7,113,144:9,111,144:3,113,144:8,-1:24" +
+",10:5,-1,10:12,110,10:13,110,10:8,-1:24,144:5,-1,144:12,141,144:13,141,144:" +
+"8,-1:24,10:5,-1,10:3,112,10:25,112,10:5,-1:24,144:5,-1,144:8,115,144:14,115" +
+",144:11,-1:24,10:5,-1,10:2,114,10:15,114,10:16,-1:24,10:5,-1,10:12,116,10:1" +
+"3,116,10:8,-1:24,10:5,-1,10:3,118,10:25,118,10:5,-1:24,10:5,-1,10:3,120,10:" +
+"25,120,10:5,-1:24,10:5,-1,10,122,10:23,122,10:9,-1:24,10:5,-1,10:6,124,10:1" +
+"7,124,10:10,-1:24,10,126,10:3,-1,10:10,126,10:24,-1:24,10:5,-1,10:8,147,149" +
+",10:13,147,10:4,149,10:6,-1:24,10:5,-1,10,169,151,10:15,151,10:6,169,10:9,-" +
+"1:24,10:5,-1,10,155,10,157,10:21,155,10:3,157,10:5,-1:24,10:5,-1,10:12,158," +
+"10:13,158,10:8,-1:24,10:5,-1,10,159,10:23,159,10:9,-1:24,10:5,-1,10:2,160,1" +
+"0:15,160,10:16,-1:24,10:5,-1,10:6,161,10:17,161,10:10,-1:24,10:5,-1,10:12,1" +
+"62,10:13,162,10:8,-1:24,10:5,-1,10:6,163,10:17,163,10:10,-1:24,10:5,-1,10:8" +
+",170,10:14,170,10:11,-1:24,10:5,-1,10:11,171,10:19,171,10:3,-1:24,10:5,-1,1" +
+"0:9,172,10:18,172,10:6,-1:24,10:5,-1,10:4,175,10:17,175,10:12,-1:13");
 
 	public java_cup.runtime.Symbol next_token ()
 		throws java.io.IOException {
@@ -803,6 +804,9 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 54:
 						{ curr_lineno++; yybegin(YYINITIAL);
+                          if (string_too_long) {
+                              return new Symbol(TokenConstants.ERROR, "String constant too long");
+                          }
                           return new Symbol(TokenConstants.ERROR, "Unterminated string constant"); /* Newline real sem escape dentro de string: erro. A string nao foi fechada corretamente. */ }
 					case -55:
 						break;
@@ -846,7 +850,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -62:
 						break;
 					case 62:
-						{ append_char('\n'); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
+						{ append_char((char)10); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
 					case -63:
 						break;
 					case 63:
@@ -979,397 +983,397 @@ class CoolLexer implements java_cup.runtime.Scanner {
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -94:
 						break;
-					case 97:
+					case 98:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -95:
 						break;
-					case 98:
+					case 99:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -96:
 						break;
-					case 99:
+					case 100:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -97:
 						break;
-					case 100:
+					case 101:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -98:
 						break;
-					case 101:
+					case 102:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -99:
 						break;
-					case 102:
+					case 103:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -100:
 						break;
-					case 103:
+					case 104:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -101:
 						break;
-					case 104:
+					case 105:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -102:
 						break;
-					case 105:
+					case 106:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -103:
 						break;
-					case 106:
+					case 107:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -104:
 						break;
-					case 107:
+					case 108:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -105:
 						break;
-					case 108:
+					case 109:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -106:
 						break;
-					case 109:
+					case 110:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -107:
 						break;
-					case 110:
+					case 111:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -108:
 						break;
-					case 111:
+					case 112:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -109:
 						break;
-					case 112:
+					case 113:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -110:
 						break;
-					case 113:
+					case 114:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -111:
 						break;
-					case 114:
+					case 115:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -112:
 						break;
-					case 115:
+					case 116:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -113:
 						break;
-					case 116:
+					case 117:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -114:
 						break;
-					case 117:
+					case 118:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -115:
 						break;
-					case 118:
+					case 119:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -116:
 						break;
-					case 119:
+					case 120:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -117:
 						break;
-					case 120:
+					case 121:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -118:
 						break;
-					case 121:
+					case 122:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -119:
 						break;
-					case 122:
+					case 123:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -120:
 						break;
-					case 123:
+					case 124:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -121:
 						break;
-					case 124:
+					case 125:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -122:
 						break;
-					case 125:
+					case 126:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -123:
 						break;
-					case 126:
+					case 127:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -124:
 						break;
-					case 127:
+					case 128:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -125:
 						break;
-					case 128:
+					case 129:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -126:
 						break;
-					case 129:
+					case 130:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -127:
 						break;
-					case 130:
+					case 131:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -128:
 						break;
-					case 131:
+					case 132:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -129:
 						break;
-					case 132:
+					case 133:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -130:
 						break;
-					case 133:
+					case 134:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -131:
 						break;
-					case 134:
+					case 135:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -132:
 						break;
-					case 135:
+					case 136:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -133:
 						break;
-					case 136:
+					case 137:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -134:
 						break;
-					case 137:
+					case 138:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -135:
 						break;
-					case 138:
+					case 139:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -136:
 						break;
-					case 139:
+					case 140:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -137:
 						break;
-					case 140:
+					case 141:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -138:
 						break;
-					case 141:
+					case 142:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -139:
 						break;
-					case 142:
+					case 143:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -140:
 						break;
-					case 143:
+					case 144:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -141:
 						break;
-					case 144:
+					case 145:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -142:
 						break;
-					case 145:
+					case 146:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -143:
 						break;
-					case 146:
+					case 147:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -144:
 						break;
-					case 147:
+					case 148:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -145:
 						break;
-					case 148:
+					case 149:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -146:
 						break;
-					case 149:
+					case 150:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -147:
 						break;
-					case 150:
+					case 151:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -148:
 						break;
-					case 151:
+					case 152:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -149:
 						break;
-					case 152:
+					case 153:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -150:
 						break;
-					case 153:
+					case 154:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -151:
 						break;
-					case 154:
+					case 155:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -152:
 						break;
-					case 155:
+					case 156:
 						{ return new Symbol(TokenConstants.TYPEID,
                                      AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
 					case -153:
 						break;
-					case 156:
+					case 157:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -154:
 						break;
-					case 157:
+					case 158:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -155:
 						break;
-					case 158:
+					case 159:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -156:
 						break;
-					case 159:
+					case 160:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -157:
 						break;
-					case 160:
+					case 161:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -158:
 						break;
-					case 161:
+					case 162:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -159:
 						break;
-					case 162:
+					case 163:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -160:
 						break;
-					case 163:
+					case 164:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -161:
 						break;
-					case 164:
+					case 165:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -162:
 						break;
-					case 165:
+					case 166:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -163:
 						break;
-					case 166:
+					case 167:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -164:
 						break;
-					case 167:
+					case 168:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -165:
 						break;
-					case 168:
+					case 169:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -166:
 						break;
-					case 169:
+					case 170:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -167:
 						break;
-					case 170:
+					case 171:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -168:
 						break;
-					case 171:
+					case 172:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -169:
 						break;
-					case 172:
+					case 173:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -170:
 						break;
-					case 173:
+					case 174:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -171:
 						break;
-					case 174:
+					case 175:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -172:
 						break;
-					case 175:
+					case 176:
 						{ return new Symbol(TokenConstants.OBJECTID,
                                      AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
 					case -173:

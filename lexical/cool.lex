@@ -153,14 +153,17 @@ import java_cup.runtime.Symbol;
                           return new Symbol(TokenConstants.STR_CONST,
                               AbstractTable.stringtable.addString(string_buf.toString())); }
 
-<STRING>\\\n            { curr_lineno++; append_char('\n'); /* Escape de newline: "\" seguido de \n real. Permite strings multi-linha com \ no final da linha. Conta a linha e adiciona \n ao conteudo. */ }
+<STRING>\\(\r?\n)            { curr_lineno++; append_char('\n'); /* Escape de newline: "\" seguido de \n real. Permite strings multi-linha com \ no final da linha. Conta a linha e adiciona \n ao conteudo. */ }
 <STRING>\\b             { append_char('\b'); /* \b -> backspace */ }
 <STRING>\\t             { append_char('\t'); /* \t -> tab */ }
-<STRING>\\n             { append_char('\n'); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
+<STRING>\\n             { append_char((char)10); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
 <STRING>\\f             { append_char('\f'); /* \f -> form feed */ }
 <STRING>\\0             { append_char('0');  /* \0 escapado -> char '0' (nao null byte). Comportamento definido pela spec do Cool. */ }
 <STRING>\\.             { append_char(yytext().charAt(1)); /* Qualquer outro escape \x -> o proprio char x. Ex: \a->'a', \\->'\\'. yytext().charAt(1) pega o char apos a barra. */ }
 <STRING>\n              { curr_lineno++; yybegin(YYINITIAL);
+                          if (string_too_long) {
+                              return new Symbol(TokenConstants.ERROR, "String constant too long");
+                          }
                           return new Symbol(TokenConstants.ERROR, "Unterminated string constant"); /* Newline real sem escape dentro de string: erro. A string nao foi fechada corretamente. */ }
 <STRING>\0              { yybegin(STRING_ERROR);
                           return new Symbol(TokenConstants.ERROR, "String contains null character"); /* Null byte real dentro de string: erro. Muda para STRING_ERROR para consumir o resto sem reportar novos erros. */ }
