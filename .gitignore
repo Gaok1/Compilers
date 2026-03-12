@@ -1,0 +1,24 @@
+# Compiled Java files
+lexical/*.class
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Generated files
+lexical/CoolLexer.java
+lexical/parser.out
+
+# Build artifacts
+lexical/lexer
+lexical/test.output
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test/Temp files
+lexical/comandos
+*.tmp

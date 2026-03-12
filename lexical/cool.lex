@@ -85,7 +85,6 @@ import java_cup.runtime.Symbol;
  * Tudo dentro de %init{ %init} e copiado para o construtor da classe CoolLexer.
  * Inicializacoes extras do lexer viriam aqui.
  */
-    // empty for now
 %init}
 
 %eofval{
@@ -153,22 +152,23 @@ import java_cup.runtime.Symbol;
                           return new Symbol(TokenConstants.STR_CONST,
                               AbstractTable.stringtable.addString(string_buf.toString())); }
 
-<STRING>\\\n            { curr_lineno++; append_char('\n'); /* Escape de newline: "\" seguido de \n real. Permite strings multi-linha com \ no final da linha. Conta a linha e adiciona \n ao conteudo. */ }
+<STRING>\\(\r?\n) { curr_lineno++; append_char('\n'); }
 <STRING>\\b             { append_char('\b'); /* \b -> backspace */ }
 <STRING>\\t             { append_char('\t'); /* \t -> tab */ }
 <STRING>\\n             { append_char('\n'); /* \n (escapado) -> newline. Diferente do \n real, que e erro de string nao terminada. */ }
 <STRING>\\f             { append_char('\f'); /* \f -> form feed */ }
-<STRING>\\0             { append_char('0');  /* \0 escapado -> char '0' (nao null byte). Comportamento definido pela spec do Cool. */ }
 <STRING>\\.             { append_char(yytext().charAt(1)); /* Qualquer outro escape \x -> o proprio char x. Ex: \a->'a', \\->'\\'. yytext().charAt(1) pega o char apos a barra. */ }
 <STRING>\n              { curr_lineno++; yybegin(YYINITIAL);
                           return new Symbol(TokenConstants.ERROR, "Unterminated string constant"); /* Newline real sem escape dentro de string: erro. A string nao foi fechada corretamente. */ }
-<STRING>\0              { yybegin(STRING_ERROR);
-                          return new Symbol(TokenConstants.ERROR, "String contains null character"); /* Null byte real dentro de string: erro. Muda para STRING_ERROR para consumir o resto sem reportar novos erros. */ }
+<STRING>\0 {
+    yybegin(STRING_ERROR);
+    return new Symbol(TokenConstants.ERROR, "String contains null character");
+}
 <STRING>.               { append_char(yytext().charAt(0)); /* Char normal: adiciona ao buffer. yytext().charAt(0) pega o unico char casado pelo ".". */ }
 
-<STRING_ERROR>\"        { yybegin(YYINITIAL); /* Fecha a string com erro: volta ao estado normal sem retornar token. */ }
-<STRING_ERROR>\n        { curr_lineno++; yybegin(YYINITIAL); /* Newline tambem encerra a string com erro. */ }
-<STRING_ERROR>.         { /* Qualquer outro char apos o erro na string e ignorado silenciosamente. */ }
+<STRING_ERROR>\" { yybegin(YYINITIAL); }
+<STRING_ERROR>\n { curr_lineno++; yybegin(YYINITIAL); }
+<STRING_ERROR>.  { }
 
 <YYINITIAL>[cC][lL][aA][sS][sS]              { return new Symbol(TokenConstants.CLASS);    /* Keywords: case-insensitive em Cool. [cC] casa 'c' ou 'C', etc. Ficam ANTES dos identificadores para ter precedencia — se o texto for "class", esta regra casa antes da regra de OBJECTID. */ }
 <YYINITIAL>[eE][lL][sS][eE]                  { return new Symbol(TokenConstants.ELSE); }
