@@ -120,3 +120,270 @@ Instructions
 Write-up for PA2J
 -----------------
 
+1. Visão Geral
+--------------
+
+Este trabalho implementa um analisador léxico para a linguagem COOL utilizando
+JLex. O scanner é definido no arquivo cool.lex e tem como responsabilidade ler
+o arquivo-fonte caractere por caractere, produzindo uma sequência de tokens que
+serão consumidos pelo parser nas fases seguintes da compilação. A implementação
+trata corretamente todas as classes de tokens definidas pela especificação de
+COOL: palavras-chave, identificadores, constantes inteiras e de string,
+operadores, comentários e todos os casos de erro exigidos.
+
+
+2. Decisões de Projeto
+----------------------
+
+2.1 Estados do Lexer
+
+Utilizamos quatro estados do JLex para separar os diferentes contextos de
+varredura:
+
+  - YYINITIAL: estado padrão. Todos os tokens normais (palavras-chave,
+    identificadores, inteiros, operadores, etc.) são reconhecidos aqui.
+
+  - COMMENT: ativado ao encontrar "(*". O lexer permanece neste estado até
+    que o "*)" correspondente seja encontrado, controlando o nível de
+    aninhamento pela variável comment_depth. Todos os caracteres são
+    descartados silenciosamente; apenas as quebras de linha são contadas.
+
+  - STRING: ativado ao encontrar aspas duplas de abertura. Os caracteres são
+    adicionados um a um ao buffer string_buf. Este estado trata todas as
+    sequências de escape e detecta os três tipos de erro de string
+    (não terminada, muito longa, byte nulo).
+
+  - STRING_ERROR: ativado quando um byte nulo é encontrado dentro de uma
+    string. Após reportar o erro, o lexer precisa consumir o restante da
+    string sem gerar tokens de erro adicionais. Este estado descarta tudo
+    até encontrar aspas de fechamento ou uma quebra de linha.
+
+A decisão de criar um estado STRING_ERROR explícito foi tomada para suprimir
+erros em cascata: após reportar "String contains null character", não faz
+sentido continuar reportando erros para o mesmo token de string.
+
+2.2 Comentários de Bloco Aninhados
+
+COOL permite comentários aninhados do tipo (* (* *) *). Um simples flag
+booleano não seria suficiente para rastrear o nível de aninhamento. Por isso,
+utilizamos um contador inteiro comment_depth, inicializado em 1 quando "(*"
+é encontrado em YYINITIAL. Cada "(*" aninhado o incrementa e cada "*)" o
+decrementa. O lexer só retorna a YYINITIAL quando comment_depth chega a zero.
+Isso trata corretamente qualquer profundidade de aninhamento.
+
+2.3 Limite de Tamanho de String
+
+A especificação de COOL define um tamanho máximo de 1024 caracteres para
+constantes de string (MAX_STR_CONST = 1025, considerando o terminador nulo).
+Em vez de interromper a varredura imediatamente ao ultrapassar o limite,
+utilizamos o flag booleano string_too_long. O método auxiliar append_char()
+verifica esse flag: se o buffer já está cheio, ativa o flag em vez de
+adicionar o caractere. Dessa forma, o lexer continua lendo até a aspa de
+fechamento, retornando a um estado limpo, e só então reporta o erro
+"String constant too long". Isso evita que o scanner fique no meio de uma
+string e produza erros espúrios nos tokens seguintes.
+
+2.4 Precedência de Palavras-Chave sobre Identificadores
+
+No JLex, quando duas regras casam a mesma entrada com o mesmo comprimento, a
+regra que aparece primeiro no arquivo tem prioridade. Todas as regras de
+palavras-chave (class, else, fi, ...) são declaradas antes das regras de
+TYPEID e OBJECTID. Isso garante que "class" seja reconhecido como a
+palavra-chave CLASS e não como um OBJECTID. Ao mesmo tempo, "classfoo" é
+corretamente reconhecido como OBJECTID, pois a regra de longest match faz o
+JLex preferir o match mais longo, que só é coberto pela regra de identificador.
+
+2.5 Palavras-Chave Case-Insensitive
+
+As palavras-chave de COOL são case-insensitive. Implementamos isso expandindo
+cada caractere de cada palavra-chave em uma alternância de suas formas
+minúscula e maiúscula, por exemplo [cC][lL][aA][sS][sS] para "class". Embora
+verbosa, essa abordagem é necessária porque o JLex não oferece uma opção de
+flag case-insensitive, e a alternância explícita torna a intenção clara sem
+nenhum custo em tempo de execução.
+
+2.6 Constantes Booleanas
+
+A especificação de COOL exige que o primeiro caractere de "true" e "false"
+seja obrigatoriamente minúsculo para que o token seja BOOL_CONST. Caso o
+primeiro caractere seja maiúsculo (ex.: "True", "TRUE"), o token é TYPEID.
+Implementamos isso com os padrões t[rR][uU][eE] e f[aA][lL][sS][eE], que
+forçam o primeiro caractere minúsculo e permanecem case-insensitive para o
+restante da palavra. Essas regras são declaradas antes das regras de TYPEID
+e OBJECTID para garantir a prioridade correta.
+
+2.7 Continuação de String em Múltiplas Linhas
+
+A especificação permite que uma string se estenda por mais de uma linha se
+uma barra invertida preceder imediatamente a quebra de linha. O padrão
+<STRING>\\(\r?\n) casa uma barra invertida seguida de um retorno de carro
+opcional e uma quebra de linha. Ao casar, curr_lineno é incrementado e um
+caractere de nova linha é adicionado ao buffer. O \r? garante portabilidade
+entre terminações de linha Windows (CRLF) e Unix (LF).
+
+2.8 Ordenação dos Operadores
+
+Os operadores de múltiplos caracteres "<-" (ASSIGN), "<=" (LE) e "=>"
+(DARROW) são declarados antes de seus prefixos de um caractere "<" e "=".
+O JLex aplica a regra de longest match, então essa ordenação não é
+estritamente necessária, mas torna a intenção explícita e evita qualquer
+ambiguidade de leitura do arquivo .lex.
+
+2.9 Regra Catch-All
+
+A última regra em YYINITIAL é:
+
+    <YYINITIAL>. { return new Symbol(TokenConstants.ERROR, yytext()); }
+
+Ela casa qualquer caractere único que não foi casado por nenhuma regra
+anterior e o retorna como token de ERROR. É declarada por último para agir
+como fallback universal para caracteres inválidos.
+
+2.10 Tratamento de EOF
+
+O bloco %eofval{} trata o EOF em cada estado possível:
+  - YYINITIAL: fim normal de entrada; retorna o token EOF.
+  - COMMENT: o comentário de bloco nunca foi fechado; retorna ERROR
+    "EOF in comment".
+  - STRING: a string nunca foi fechada; retorna ERROR "EOF in string constant".
+  - STRING_ERROR: a string teve um erro mas nunca foi fechada; retorna EOF
+    silenciosamente, pois o erro já foi reportado anteriormente.
+
+
+3. Argumento de Corretude
+--------------------------
+
+3.1 Todas as Classes de Tokens Estão Cobertas
+
+Todo token definido em TokenConstants.java possui uma regra correspondente em
+cool.lex: as 17 palavras-chave; BOOL_CONST (true/false); INT_CONST ([0-9]+);
+STR_CONST (estado STRING); TYPEID ([A-Z][a-zA-Z0-9_]*); OBJECTID
+([a-z][a-zA-Z0-9_]*); e todos os operadores e símbolos de pontuação.
+
+3.2 Contagem de Linhas é Consistente
+
+curr_lineno é incrementado por toda regra que consome uma quebra de linha,
+em todos os estados: YYINITIAL, COMMENT, STRING (para continuações com barra
+invertida e para erros de string não terminada) e STRING_ERROR. Isso garante
+que o número de linha reportado com cada token seja sempre preciso,
+independentemente de quantas quebras de linha apareceram dentro de comentários
+ou strings.
+
+3.3 Recuperação de Erros Não Perde Tokens
+
+Quando um erro ocorre, o scanner é projetado para se recuperar sem descartar
+tokens válidos:
+  - Caractere inválido: consumido como ERROR de um único caractere; a varredura
+    continua no caractere seguinte.
+  - String não terminada (newline sem barra invertida): a quebra de linha é
+    consumida, curr_lineno é incrementado, e a varredura recomeça na próxima
+    linha.
+  - String muito longa: o restante da string é consumido até a aspa de
+    fechamento antes de o erro ser retornado.
+  - Byte nulo em string: o estado STRING_ERROR consome o restante da string sem
+    produzir tokens adicionais.
+  - "*)" sem abertura: um único token ERROR é produzido e a varredura continua.
+
+3.4 Longest Match e Prioridade de Regras
+
+O JLex implementa a regra de casamento mais longo (maximal munch). Nos casos
+em que duas regras casariam entrada de comprimento igual, confiamos na
+ordenação (palavras-chave antes de identificadores; "(*" antes do catch-all
+".") para garantir o token correto.
+
+
+4. Casos de Teste (test.cl)
+----------------------------
+
+O arquivo de testes é organizado em 13 seções, cada uma voltada para um aspecto
+específico da especificação léxica.
+
+Seção 1 — Palavras-chave:
+  Todas as 17 palavras-chave de COOL são testadas em quatro variações de caixa
+  diferentes (tudo minúsculo, tudo maiúsculo, primeira letra maiúscula e uma
+  variante mista). Isso verifica que os padrões case-insensitive funcionam para
+  cada palavra-chave.
+
+Seção 2 — Constantes Booleanas:
+  "true", "tRuE" e "tRUE" são testados como BOOL_CONST (primeiro char
+  minúsculo). "True" e "TRUE" são testados como TYPEID (primeiro char
+  maiúsculo). O mesmo vale para "false". Isso testa diretamente a condição
+  de fronteira definida pela especificação.
+
+Seção 3 — Constantes Inteiras:
+  Inclui 0, números de um dígito, múltiplos dígitos, com zeros à esquerda
+  (007) e um número grande. Exercita a regra [0-9]+ em entradas representativas.
+
+Seção 4 — Identificadores:
+  TYPEIDs incluem tipos built-in (Int, Bool, String, Object, IO, SELF_TYPE) e
+  nomes definidos pelo usuário. OBJECTIDs incluem "self", nomes de um
+  caractere, nomes com underscore no meio e nomes alfanuméricos. Os inputs
+  "_invalido" e "_" testam que um underscore inicial é um caractere inválido:
+  o underscore produz ERROR e o restante do nome é tokenizado separadamente.
+
+Seção 5 — Operadores e Pontuação:
+  Todos os operadores e símbolos definidos em TokenConstants.java são
+  exercitados ao menos uma vez: <-, <=, =>, +, -, *, /, <, =, ~, ., ,, ;, :,
+  (, ), {, }, @. Os operadores de múltiplos caracteres são testados em contexto
+  para confirmar que não são divididos em tokens individuais.
+
+Seção 6 — Constantes de String:
+  Cobre todas as sequências de escape definidas (\t, \n, \b, \f, \", \\) e a
+  regra de escape genérico (\a, \z, \9 viram o próprio segundo caractere). Uma
+  string multilinha usando continuação por barra invertida testa que curr_lineno
+  é incrementado e o newline é adicionado ao conteúdo. Uma string vazia "" e
+  uma string comum também são incluídas.
+
+Seção 7 — Comentários de Linha:
+  Múltiplos comentários "--" são incluídos, um deles contendo caracteres
+  especiais (delimitadores de comentário de bloco, operadores, aspas) para
+  confirmar que nada dentro de um comentário de linha é tokenizado.
+
+Seção 8 — Comentários de Bloco:
+  Testa um comentário de bloco de uma linha, um comentário de bloco de
+  múltiplas linhas (verificando que curr_lineno avança corretamente) e um
+  comentário aninhado de três níveis (* (* (* *) *) *) para exercitar o
+  contador comment_depth. Um comentário com conteúdo semelhante a strings e
+  operadores confirma que nada dentro é tokenizado.
+
+Seção 9 — String Não Terminada:
+  Uma string contendo um newline real (sem escape) dispara ERROR "Unterminated
+  string constant". O token "token_apos_erro_de_string" logo em seguida
+  confirma que o scanner retoma corretamente na próxima linha e continua
+  produzindo tokens válidos.
+
+Seção 10 — String Muito Longa:
+  Uma string de 1025 caracteres 'a' (um acima do limite de 1024) dispara ERROR
+  "String constant too long". Este teste de fronteira confirma que MAX_STR_CONST
+  e o flag string_too_long funcionam conforme especificado.
+
+Seção 11 — Caracteres Inválidos:
+  Os caracteres '#' e '!' não fazem parte do conjunto de caracteres de COOL.
+  Ambos produzem tokens ERROR contendo o próprio caractere inválido, exercitando
+  a regra catch-all.
+
+Seção 12 — *) sem Abertura:
+  Um "*)" isolado fora de qualquer comentário de bloco produz ERROR "Unmatched
+  *)". Isso confirma que a regra de YYINITIAL para "*)" dispara antes do
+  catch-all.
+
+Seção 13 — EOF dentro de Comentário:
+  Um "(*" não fechado no fim do arquivo dispara ERROR "EOF in comment" via o
+  bloco %eofval{}. Esta é intencionalmente a última seção, pois um comentário
+  de bloco aberto consome toda a entrada restante.
+
+Limitações dos Casos de Teste:
+  Dois casos de erro não são diretamente testáveis em um arquivo de texto
+  simples e, portanto, não estão presentes em test.cl:
+
+  - ERROR "String contains null character": requer embutir um byte 0x00 bruto
+    no arquivo-fonte, o que editores de texto padrão não suportam. O caso
+    está implementado em cool.lex (a regra \0 no estado STRING faz a transição
+    para STRING_ERROR), mas não pode ser exercitado por test.cl sem um gerador
+    de arquivo binário (ex.: printf '"abc\x00def"' > test.cl).
+
+  - ERROR "EOF in string constant": exigiria que o arquivo terminasse com uma
+    string aberta como último construct. Como EOF in comment já é o último
+    teste e consome toda a entrada restante, os dois erros não podem coexistir
+    no mesmo arquivo. O tratamento de EOF em string está presente no bloco
+    %eofval{} e é correto por inspeção direta do código.
