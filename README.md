@@ -42,7 +42,7 @@ O COOL tem uma regra específica: o primeiro caractere do booleano tem que ser m
 
 ### Strings
 
-As strings foram a parte mais complexa. O processamento é char a char dentro do estado `STRING`, com conversão dos escapes:
+O processamento é char a char dentro do estado `STRING`, com conversão dos escapes:
 
 - `\n` → newline, `\t` → tab, `\b` → backspace, `\f` → form feed
 - `\0` → o caractere `'0'` (não o null byte — isso está na spec do COOL)
