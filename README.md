@@ -7,9 +7,9 @@ Implementamos o analisador léxico (scanner) para a linguagem COOL usando JLex. 
 Para compilar e rodar:
 
 ```bash
-make lexer        # compila
-make dotest       # roda no test.cl
-./lexer foo.cl    # roda em qualquer arquivo
+make lexer        
+make dotest       
+./lexer foo.cl    
 ```
 
 ---
