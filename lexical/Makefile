@@ -33,8 +33,6 @@ CUPCLASSPATH := ${CLASSDIR}/lib/java-cup-11a.jar:${CLASSDIR}/lib/jlex.jar
 JAVAC := javac
 JLEX := java -classpath ${CLASSDIR}/lib/jlex.jar JLex.Main
 
-# sm: we need rt.jar on Solaris/x86, and I'm hoping it won't
-# cause a problem elsewhere
 CLASSPATH := ${CUPCLASSPATH}:.:/usr/java/lib/rt.jar
 
 source : ${SRC} ${TSRC} ${LSRC} ${LIBS} ${CSRC}
@@ -61,9 +59,6 @@ ${CLS}: ${CFIL}
 
 ${LIBS}:
 	${CLASSDIR}/etc/link-object ${ASSN} $@
-
-# These dependencies allow you to get the starting files for
-# the assignment.  They will not overwrite a file you already have.
 
 ${SRC} :								
 	${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}

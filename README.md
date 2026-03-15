@@ -7,9 +7,9 @@ Implementamos o analisador léxico (scanner) para a linguagem COOL usando JLex. 
 Para compilar e rodar:
 
 ```bash
-make lexer        # compila
-make dotest       # roda no test.cl
-./lexer foo.cl    # roda em qualquer arquivo
+make lexer        
+make dotest       
+./lexer foo.cl    
 ```
 
 ---
@@ -32,7 +32,7 @@ O comentário de bloco foi mais trabalhoso por causa do aninhamento. A solução
 
 ### Keywords
 
-As keywords do COOL são case-insensitive, então `class`, `CLASS` e `cLaSs` são a mesma coisa. A solução foi usar padrões do tipo `[cC][lL][aA][sS][sS]` pra cada keyword, na força bruta.
+As keywords do COOL são case-insensitive, então `class`, `CLASS` e `cLaSs` são a mesma coisa. A solução foi usar padrões do tipo `[cC][lL][aA][sS][sS]` pra cada keyword.
 
 Uma coisa importante: as keywords precisam ficar antes das regras de identificadores no arquivo. O JLex, em caso de empate no tamanho do match, escolhe a primeira regra. Sem isso `class` seria reconhecido como OBJECTID.
 
@@ -42,7 +42,7 @@ O COOL tem uma regra específica: o primeiro caractere do booleano tem que ser m
 
 ### Strings
 
-As strings foram a parte mais complexa. O processamento é char a char dentro do estado `STRING`, com conversão dos escapes:
+O processamento é char a char dentro do estado `STRING`, com conversão dos escapes:
 
 - `\n` → newline, `\t` → tab, `\b` → backspace, `\f` → form feed
 - `\0` → o caractere `'0'` (não o null byte — isso está na spec do COOL)
@@ -68,7 +68,7 @@ O tratamento de EOF fica no bloco `%eofval{}`, que verifica em qual estado o sca
 
 ### Tabelas de strings e contagem de linhas
 
-Identificadores, inteiros e strings são armazenados nas tabelas fornecidas (`idtable`, `inttable`, `stringtable`).
+Identificadores, inteiros e strings são armazenados nas tabelas fornecidas (`idtable`, `inttable`, `stringtable`), como pedido na spec.
 
 A variável `curr_lineno` é incrementada em todo `\n` encontrado, inclusive dentro de comentários de bloco e strings com escape de newline, pra manter a contagem correta pra o parser.
 
@@ -91,5 +91,3 @@ O `test.cl` foi escrito pra cobrir tudo que a spec pede. Está dividido em 13 se
 11. **Erro: caracteres inválidos** — `#` e `!`
 12. **Erro: `*)` sem abertura** — fora de qualquer comentário
 13. **Erro: comentário sem fechamento** — `(*` no final do arquivo, sem `*)`, provoca `"EOF in comment"`
-
-A seção 13 é sempre a última porque o comentário sem fechar consome tudo até o EOF.

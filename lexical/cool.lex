@@ -173,7 +173,7 @@ import java_cup.runtime.Symbol;
 <STRING_ERROR>\n        { curr_lineno++; yybegin(YYINITIAL); /* Newline tambem encerra a string com erro. */ }
 <STRING_ERROR>.         { /* Qualquer outro char apos o erro na string e ignorado silenciosamente. */ }
 
-<YYINITIAL>[cC][lL][aA][sS][sS]              { return new Symbol(TokenConstants.CLASS);    /* Keywords: case-insensitive em Cool. [cC] casa 'c' ou 'C', etc. Ficam ANTES dos identificadores para ter precedencia — se o texto for "class", esta regra casa antes da regra de OBJECTID. */ }
+<YYINITIAL>[cC][lL][aA][sS][sS]              { return new Symbol(TokenConstants.CLASS);    /* Keywords: case-insensitive em Cool. [cC] casa 'c' ou 'C', etc */ }
 <YYINITIAL>[eE][lL][sS][eE]                  { return new Symbol(TokenConstants.ELSE); }
 <YYINITIAL>[fF][iI]                          { return new Symbol(TokenConstants.FI); }
 <YYINITIAL>[iI][fF]                          { return new Symbol(TokenConstants.IF); }
@@ -191,27 +191,27 @@ import java_cup.runtime.Symbol;
 <YYINITIAL>[oO][fF]                          { return new Symbol(TokenConstants.OF); }
 <YYINITIAL>[nN][oO][tT]                      { return new Symbol(TokenConstants.NOT); }
 
-<YYINITIAL>t[rR][uU][eE]      { return new Symbol(TokenConstants.BOOL_CONST, Boolean.TRUE);  /* Booleano true: primeira letra OBRIGATORIAMENTE minuscula. Ex: true, tRuE, tRUE -> BOOL_CONST. True, TRUE -> TYPEID (identificador de tipo). */ }
+<YYINITIAL>t[rR][uU][eE]      { return new Symbol(TokenConstants.BOOL_CONST, Boolean.TRUE);  /* Booleano true: primeira letra tem que ser minuscula. True, TRUE -> TYPEID (identificador de tipo). */ }
 <YYINITIAL>f[aA][lL][sS][eE]  { return new Symbol(TokenConstants.BOOL_CONST, Boolean.FALSE); /* Booleano false: mesma regra — primeiro char deve ser 'f' minusculo. */ }
 
 <YYINITIAL>[0-9]+              { return new Symbol(TokenConstants.INT_CONST,
                                      AbstractTable.inttable.addString(yytext())); /* Inteiro: sequencia de digitos. O valor e guardado como String em inttable para que o parser recupere depois. yytext() retorna o texto casado, ex: "42". */ }
 
 <YYINITIAL>[A-Z][a-zA-Z0-9_]* { return new Symbol(TokenConstants.TYPEID,
-                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador que comeca com MAIUSCULA — e um nome de tipo. Ex: MyClass, Object, IO. */ }
+                                     AbstractTable.idtable.addString(yytext())); /* TYPEID: identificador tem que comecar com letra maiuscula eh um nome de tipo. Ex: MyClass, Object, IO. */ }
 <YYINITIAL>[a-z][a-zA-Z0-9_]* { return new Symbol(TokenConstants.OBJECTID,
-                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula — e um nome de variavel/metodo. Ex: myVar, self. */ }
+                                     AbstractTable.idtable.addString(yytext())); /* OBJECTID: identificador que comeca com minuscula eh um nome de variavel/metodo. Ex: myVar, self. */ }
 
 <YYINITIAL>"<-"  { return new Symbol(TokenConstants.ASSIGN); /* atribuicao: x <- 5 */ }
 <YYINITIAL>"<="  { return new Symbol(TokenConstants.LE);     /* menor ou igual. Vem antes de "<" para que "<=" nao seja lido como "<" + "=". */ }
-<YYINITIAL>"=>"  { return new Symbol(TokenConstants.DARROW); /* seta de case: of Int => ... */ }
+<YYINITIAL>"=>"  { return new Symbol(TokenConstants.DARROW); /* seta de case of Int => */ }
 <YYINITIAL>"+"   { return new Symbol(TokenConstants.PLUS); }
 <YYINITIAL>"-"   { return new Symbol(TokenConstants.MINUS); }
 <YYINITIAL>"*"   { return new Symbol(TokenConstants.MULT); }
 <YYINITIAL>"/"   { return new Symbol(TokenConstants.DIV); }
 <YYINITIAL>"<"   { return new Symbol(TokenConstants.LT);     /* menor que */ }
 <YYINITIAL>"="   { return new Symbol(TokenConstants.EQ);     /* igualdade */ }
-<YYINITIAL>"~"   { return new Symbol(TokenConstants.NEG);    /* negacao inteira: ~x equivale a -x em Cool */ }
+<YYINITIAL>"~"   { return new Symbol(TokenConstants.NEG);    /* negacao inteira: ~x equivale a -x em cool */ }
 <YYINITIAL>"."   { return new Symbol(TokenConstants.DOT);    /* acesso a metodo: obj.metodo() */ }
 <YYINITIAL>","   { return new Symbol(TokenConstants.COMMA); }
 <YYINITIAL>";"   { return new Symbol(TokenConstants.SEMI); }
@@ -222,4 +222,4 @@ import java_cup.runtime.Symbol;
 <YYINITIAL>"}"   { return new Symbol(TokenConstants.RBRACE); }
 <YYINITIAL>"@"   { return new Symbol(TokenConstants.AT);     /* dispatch estatico: obj@Tipo.metodo() */ }
 
-<YYINITIAL>.     { return new Symbol(TokenConstants.ERROR, yytext()); /* Catch-all: qualquer char invalido vira um token ERROR. DEVE ser a ultima regra — tudo valido ja foi tratado acima. */ }
+<YYINITIAL>.     { return new Symbol(TokenConstants.ERROR, yytext()); /* Catch-all: qualquer char invalido vira um token ERROR. deve ser a ultima regra — tudo valido ja foi tratado acima. */ }
