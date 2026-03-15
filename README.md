@@ -1,0 +1,93 @@
+# TP02 — Análise Léxica da Linguagem COOL
+
+## O que foi feito
+
+Implementamos o analisador léxico (scanner) para a linguagem COOL usando JLex. A implementação ficou toda no arquivo `cool.lex`, que o JLex usa pra gerar o `CoolLexer.java`.
+
+Para compilar e rodar:
+
+```bash
+make lexer        # compila
+make dotest       # roda no test.cl
+./lexer foo.cl    # roda em qualquer arquivo
+```
+
+---
+
+## Decisões de implementação
+
+### Estados do scanner
+
+Além do estado padrão `YYINITIAL`, usamos mais três estados:
+
+- **`COMMENT`** — entramos aqui quando encontramos `(*` e saímos quando fechamos o comentário. Usamos uma variável `comment_depth` pra controlar aninhamento, já que COOL permite comentários dentro de comentários.
+- **`STRING`** — entramos quando abre aspas e saímos quando fecha. Aqui os caracteres vão sendo acumulados no `string_buf`.
+- **`STRING_ERROR`** — serve pra recuperar de erro dentro de string (por exemplo, null byte). Depois que reportamos o erro, ficamos nesse estado ignorando o restante até fechar a string. Sem isso, a mesma string problemática geraria vários erros em sequência.
+
+### Comentários
+
+Comentário de linha (`--`) foi bem direto: a regex `"--"[^\n]*` consome tudo até o fim da linha sem incluir o `\n`, que é tratado pela regra de newline (assim a contagem de linhas não quebra).
+
+O comentário de bloco foi mais trabalhoso por causa do aninhamento. A solução foi manter um contador `comment_depth`: `(*` incrementa, `*)` decrementa, e só voltamos ao estado normal quando o contador zera. Isso cobre casos como `(* nível1 (* nível2 *) ainda dentro *)`.
+
+### Keywords
+
+As keywords do COOL são case-insensitive, então `class`, `CLASS` e `cLaSs` são a mesma coisa. A solução foi usar padrões do tipo `[cC][lL][aA][sS][sS]` pra cada keyword.
+
+Uma coisa importante: as keywords precisam ficar antes das regras de identificadores no arquivo. O JLex, em caso de empate no tamanho do match, escolhe a primeira regra. Sem isso `class` seria reconhecido como OBJECTID.
+
+### Booleanos
+
+O COOL tem uma regra específica: o primeiro caractere do booleano tem que ser minúsculo pra ser `BOOL_CONST`. Então `true`, `tRuE` e `tRUE` são booleanos, mas `True` e `TRUE` viram `TYPEID` (nome de tipo). Os padrões ficaram `t[rR][uU][eE]` e `f[aA][lL][sS][eE]` justamente por isso.
+
+### Strings
+
+As strings foram a parte mais complexa. O processamento é char a char dentro do estado `STRING`, com conversão dos escapes:
+
+- `\n` → newline, `\t` → tab, `\b` → backspace, `\f` → form feed
+- `\0` → o caractere `'0'` (não o null byte — isso está na spec do COOL)
+- `\` + newline real → newline (permite string em múltiplas linhas)
+- qualquer outro `\x` → o próprio `x`
+
+O limite de 1024 caracteres é controlado pela flag `string_too_long`. Quando o buffer está cheio, a flag é ativada mas continuamos lendo até fechar a string, aí retornamos o erro. Isso evita que uma string longa gere um erro pra cada caractere extra.
+
+### Erros
+
+O scanner não imprime nada diretamente — todos os erros viram um token `ERROR` com a mensagem correspondente, pra ser tratado pelo parser.
+
+Os erros tratados são:
+- caractere inválido (ex: `#`, `!`) → retorna o próprio caractere como erro
+- `*)` fora de comentário → `"Unmatched *)"`
+- newline real dentro de string → `"Unterminated string constant"`
+- string maior que 1024 chars → `"String constant too long"`
+- null byte dentro de string → `"String contains null character"`
+- EOF dentro de comentário → `"EOF in comment"`
+- EOF dentro de string → `"EOF in string constant"`
+
+O tratamento de EOF fica no bloco `%eofval{}`, que verifica em qual estado o scanner está e retorna o erro adequado antes de encerrar.
+
+### Tabelas de strings e contagem de linhas
+
+Identificadores, inteiros e strings são armazenados nas tabelas fornecidas (`idtable`, `inttable`, `stringtable`), como pedido na spec.
+
+A variável `curr_lineno` é incrementada em todo `\n` encontrado, inclusive dentro de comentários de bloco e strings com escape de newline, pra manter a contagem correta pra o parser.
+
+---
+
+## Casos de teste
+
+O `test.cl` foi escrito pra cobrir tudo que a spec pede. Está dividido em 13 seções:
+
+1. **Keywords** — todas as 17, em várias combinações de maiúscula/minúscula
+2. **Booleanos** — `true`/`false` com primeira letra minúscula (válido) e maiúscula (vira TYPEID)
+3. **Inteiros** — zero, números normais, zeros à esquerda, número grande
+4. **Identificadores** — TYPEID (maiúscula), OBJECTID (minúscula), underscore no início (inválido)
+5. **Operadores e pontuação** — todos: `<-`, `<=`, `=>`, `+`, `-`, `*`, `/`, `<`, `=`, `~`, `.`, `,`, `;`, `:`, `(`, `)`, `{`, `}`, `@`
+6. **Strings válidas** — todos os escapes, string vazia, string multi-linha com `\` no final da linha
+7. **Comentários de linha** — simples, com `--` dentro, com símbolos especiais
+8. **Comentários de bloco** — simples, multi-linha, aninhado em 3 níveis, com conteúdo variado
+9. **Erro: string não terminada** — newline real dentro da string
+10. **Erro: string muito longa** — 1025 caracteres `'a'`
+11. **Erro: caracteres inválidos** — `#` e `!`
+12. **Erro: `*)` sem abertura** — fora de qualquer comentário
+13. **Erro: comentário sem fechamento** — `(*` no final do arquivo, sem `*)`, provoca `"EOF in comment"`
