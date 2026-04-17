@@ -1,0 +1,426 @@
+/*
+ *  cool.cup
+ *  Parser para a linguagem COOL — TP-03 (Análise Sintática)
+ *
+ *  Implementa a gramática completa do COOL conforme o manual de referência
+ *  (The Cool Reference Manual, seção 11 / Figura 1) usando CUP (Java).
+ *
+ *  Saída: AST (Abstract Syntax Tree) usando o pacote cool-tree.java.
+ *
+ *  ESTRUTURA:
+ *    1. action code — helpers acessíveis nas ações semânticas
+ *    2. parser code — tratamento de erros sintáticos
+ *    3. Terminais e não-terminais
+ *    4. Declarações de precedência (menor → maior)
+ *    5. Regras gramaticais com ações que constroem a AST
+ */
+
+import java_cup.runtime.*;
+
+/* Código copiado para dentro da classe de ações semânticas.
+   NÃO remover nem modificar o que já estava aqui. */
+action code {:
+
+    int curr_lineno() {
+	return ((CoolTokenLexer)parser.getScanner()).curr_lineno();
+    }
+
+    AbstractSymbol curr_filename() {
+	return ((CoolTokenLexer)parser.getScanner()).curr_filename();
+    }
+:}
+
+/************************************************************************/
+/*                DONT CHANGE ANYTHING IN THIS SECTION                  */
+
+parser code {:
+    int omerrs = 0;
+
+    public void syntax_error(Symbol cur_token) {
+        int lineno = action_obj.curr_lineno();
+	String filename = action_obj.curr_filename().getString();
+        System.err.print("\"" + filename + "\", line " + lineno +
+		         ": parse error at or near ");
+        Utilities.printToken(cur_token);
+	omerrs++;
+	if (omerrs>50) {
+	   System.err.println("More than 50 errors");
+	   System.exit(1);
+	}
+    }
+
+    public void unrecovered_syntax_error(Symbol cur_token) {
+    }
+:}
+
+/* Declare the terminals; a few have types for associated lexemes.  The
+token ERROR is never used in the parser; thus, it is a parse error when
+the lexer returns it.  */
+
+terminal CLASS, ELSE, FI, IF, IN, INHERITS, LET, LET_STMT, LOOP, POOL, THEN, WHILE;
+terminal CASE, ESAC, OF, DARROW, NEW, ISVOID;
+terminal ASSIGN, NOT, LE, ERROR;
+terminal PLUS, DIV, MINUS, MULT, EQ, LT, DOT, NEG, COMMA, SEMI, COLON;
+terminal LPAREN, RPAREN, AT, LBRACE, RBRACE;
+terminal AbstractSymbol STR_CONST, INT_CONST;
+terminal Boolean BOOL_CONST;
+terminal AbstractSymbol TYPEID, OBJECTID;
+
+/*  DON'T CHANGE ANYTHING ABOVE THIS LINE, OR YOUR PARSER WONT WORK       */
+/**************************************************************************/
+
+/*
+ * Declarações de não-terminais com seus tipos na AST.
+ * O tipo determina qual classe Java representa o valor semântico (RESULT).
+ */
+nonterminal Program          program;
+nonterminal Classes          class_list;
+nonterminal Class_           class;
+nonterminal Features         feature_list;
+nonterminal Feature          feature;
+nonterminal Formals          formal_list;
+nonterminal formalc          formal;
+nonterminal Expression       expr;
+nonterminal Expressions      expr_list;        /* argumentos de dispatch */
+nonterminal Expressions      block_expr_list;  /* expressões dentro de { ... } */
+nonterminal Cases            case_list;
+nonterminal branch           case_branch;
+nonterminal Expression       let_expr;         /* let com recursão direita */
+
+/*
+ * Declarações de precedência — da MENOR para a MAIOR (última = mais alta).
+ * Fonte: COOL Reference Manual, seção 11.1.
+ *
+ * Precedência (menor → maior conforme o manual):
+ *   <-   (atribuição, right-assoc)
+ *   not
+ *   <=  <  =  (sem associatividade entre elas)
+ *   +  -
+ *   *  /
+ *   isvoid
+ *   ~   (negação inteira)
+ *   @   (static dispatch)
+ *   .   (dispatch — mais alta)
+ */
+precedence right ASSIGN;
+precedence right NOT;
+precedence nonassoc LE, LT, EQ;
+precedence left   PLUS, MINUS;
+precedence left   MULT, DIV;
+precedence left   ISVOID;
+precedence left   NEG;
+precedence left   AT;
+precedence left   DOT;
+
+/*
+ * =========================================================================
+ * REGRAS GRAMATICAIS
+ * =========================================================================
+ *
+ * Convenções:
+ *   :nome  — rótulo para acessar o valor semântico nas ações
+ *   RESULT — variável onde colocamos o nó AST construído
+ *   curr_lineno()   — número da linha atual (do lexer)
+ *   curr_filename() — arquivo atual (AbstractSymbol)
+ *
+ * Construtores AST usados (ver cool-tree.java):
+ *   program(lineno, Classes)
+ *   class_(lineno, name, parent, features, filename)
+ *   method(lineno, name, Formals, return_type, expr)
+ *   attr(lineno, name, type_decl, init_expr)
+ *   formalc(lineno, name, type_decl)
+ *   branch(lineno, name, type_decl, expr)
+ *   assign(lineno, name, expr)
+ *   dispatch(lineno, expr, name, Expressions)
+ *   static_dispatch(lineno, expr, type_name, name, Expressions)
+ *   cond(lineno, pred, then_exp, else_exp)
+ *   loop(lineno, pred, body)
+ *   typcase(lineno, expr, Cases)
+ *   block(lineno, Expressions)
+ *   let(lineno, identifier, type_decl, init, body)
+ *   new_(lineno, type_name)
+ *   int_const / string_const / bool_const / object / no_expr
+ * =========================================================================
+ */
+
+/* Um programa COOL é uma sequência não-vazia de classes. */
+program
+	::= class_list:cl
+	    {: RESULT = new programc(curr_lineno(), cl); :}
+	;
+
+/* Lista de classes: uma ou mais. */
+class_list
+	/* uma única classe */
+	::= class:c
+	    {: RESULT = (new Classes(curr_lineno())).appendElement(c); :}
+	/* várias classes */
+	| class_list:cl class:c
+	    {: RESULT = cl.appendElement(c); :}
+	;
+
+/*
+ * Classe COOL:
+ *   class TYPE { feature_list };
+ *   class TYPE inherits TYPE { feature_list };
+ *
+ * Recuperação de erros: classe malformada → pula até SEMI, continua.
+ */
+class
+	/* sem herança explícita → herda de Object */
+	::= CLASS TYPEID:n LBRACE feature_list:f RBRACE SEMI
+	    {: RESULT = new class_c(curr_lineno(), n,
+		    AbstractTable.idtable.addString("Object"),
+		    f, curr_filename()); :}
+	/* com herança */
+	| CLASS TYPEID:n INHERITS TYPEID:p LBRACE feature_list:f RBRACE SEMI
+	    {: RESULT = new class_c(curr_lineno(), n, p, f, curr_filename()); :}
+	/* recuperação: classe malformada — pula até o próximo SEMI */
+	| error SEMI
+	    {: RESULT = new class_c(curr_lineno(),
+		    AbstractTable.idtable.addString("_error_class"),
+		    AbstractTable.idtable.addString("Object"),
+		    new Features(curr_lineno()), curr_filename()); :}
+	;
+
+/*
+ * Lista de features de uma classe (pode ser vazia).
+ */
+feature_list
+	/* classe sem features */
+	::= /* vazio */
+	    {: RESULT = new Features(curr_lineno()); :}
+	/* acumula features */
+	| feature_list:fl feature:f
+	    {: RESULT = fl.appendElement(f); :}
+	;
+
+/*
+ * Feature: método ou atributo.
+ *
+ *   Método:   id(formals) : TYPE { expr } ;
+ *   Atributo: id : TYPE [ <- expr ] ;
+ *
+ * Recuperação: feature malformada → pula até SEMI, continua na próxima.
+ */
+feature
+	/* método */
+	::= OBJECTID:n LPAREN formal_list:fl RPAREN COLON TYPEID:t LBRACE expr:e RBRACE SEMI
+	    {: RESULT = new method(curr_lineno(), n, fl, t, e); :}
+	/* atributo com inicialização */
+	| OBJECTID:n COLON TYPEID:t ASSIGN expr:e SEMI
+	    {: RESULT = new attr(curr_lineno(), n, t, e); :}
+	/* atributo sem inicialização → init = no_expr */
+	| OBJECTID:n COLON TYPEID:t SEMI
+	    {: RESULT = new attr(curr_lineno(), n, t, new no_expr(curr_lineno())); :}
+	/* recuperação: feature malformada */
+	| error SEMI
+	;
+
+/*
+ * Lista de parâmetros formais (pode ser vazia).
+ * Separados por vírgula quando há mais de um.
+ */
+formal_list
+	/* zero parâmetros */
+	::= /* vazio */
+	    {: RESULT = new Formals(curr_lineno()); :}
+	/* um parâmetro */
+	| formal:f
+	    {: RESULT = (new Formals(curr_lineno())).appendElement(f); :}
+	/* múltiplos parâmetros separados por vírgula */
+	| formal_list:fl COMMA formal:f
+	    {: RESULT = fl.appendElement(f); :}
+	;
+
+/* Parâmetro formal: id : TYPE */
+formal
+	::= OBJECTID:n COLON TYPEID:t
+	    {: RESULT = new formalc(curr_lineno(), n, t); :}
+	;
+
+/*
+ * Expressões COOL — núcleo do parser.
+ *
+ * Precedência é controlada pelas declarações acima.
+ * O CUP resolve conflitos shift-reduce usando essas declarações.
+ */
+expr
+	/* --- Atribuição --- */
+	::= OBJECTID:n ASSIGN expr:e
+	    {: RESULT = new assign(curr_lineno(), n, e); :}
+
+	/* --- Dispatch: e.m(args) --- */
+	| expr:e DOT OBJECTID:n LPAREN expr_list:a RPAREN
+	    {: RESULT = new dispatch(curr_lineno(), e, n, a); :}
+
+	/* --- Static dispatch: e@TYPE.m(args) --- */
+	| expr:e AT TYPEID:t DOT OBJECTID:n LPAREN expr_list:a RPAREN
+	    {: RESULT = new static_dispatch(curr_lineno(), e, t, n, a); :}
+
+	/* --- Self-dispatch: m(args) — equivale a self.m(args) --- */
+	| OBJECTID:n LPAREN expr_list:a RPAREN
+	    {: RESULT = new dispatch(curr_lineno(),
+		    new object(curr_lineno(),
+			    AbstractTable.idtable.addString("self")),
+		    n, a); :}
+
+	/* --- Condicional: if pred then e1 else e2 fi --- */
+	| IF expr:pred THEN expr:then_e ELSE expr:else_e FI
+	    {: RESULT = new cond(curr_lineno(), pred, then_e, else_e); :}
+
+	/* --- Laço: while pred loop body pool --- */
+	| WHILE expr:pred LOOP expr:body POOL
+	    {: RESULT = new loop(curr_lineno(), pred, body); :}
+
+	/* --- Bloco: { e1; e2; ... en; } --- */
+	| LBRACE block_expr_list:el RBRACE
+	    {: RESULT = new block(curr_lineno(), el); :}
+
+	/* --- Let: delega para let_expr (recursão à direita) --- */
+	| LET let_expr:e
+	    {: RESULT = e; :}
+
+	/* --- Case: case e of [ id:TYPE => expr; ]+ esac --- */
+	| CASE expr:e OF case_list:cl ESAC
+	    {: RESULT = new typcase(curr_lineno(), e, cl); :}
+
+	/* --- New: new TYPE --- */
+	| NEW TYPEID:t
+	    {: RESULT = new new_(curr_lineno(), t); :}
+
+	/* --- Isvoid: isvoid expr --- */
+	| ISVOID expr:e
+	    {: RESULT = new isvoid(curr_lineno(), e); :}
+
+	/* --- Operadores aritméticos --- */
+	| expr:e1 PLUS  expr:e2  {: RESULT = new plus(curr_lineno(), e1, e2); :}
+	| expr:e1 MINUS expr:e2  {: RESULT = new sub(curr_lineno(), e1, e2); :}
+	| expr:e1 MULT  expr:e2  {: RESULT = new mul(curr_lineno(), e1, e2); :}
+	| expr:e1 DIV   expr:e2  {: RESULT = new divide(curr_lineno(), e1, e2); :}
+
+	/* --- Negação inteira: ~expr --- */
+	| NEG expr:e
+	    {: RESULT = new neg(curr_lineno(), e); :}
+
+	/* --- Comparações (não-associativas entre si) --- */
+	| expr:e1 LT expr:e2  {: RESULT = new lt(curr_lineno(), e1, e2); :}
+	| expr:e1 EQ expr:e2  {: RESULT = new eq(curr_lineno(), e1, e2); :}
+	| expr:e1 LE expr:e2  {: RESULT = new leq(curr_lineno(), e1, e2); :}
+
+	/* --- Not lógico --- */
+	| NOT expr:e
+	    {: RESULT = new comp(curr_lineno(), e); :}
+
+	/* --- Parênteses (apenas agrupamento) --- */
+	| LPAREN expr:e RPAREN
+	    {: RESULT = e; :}
+
+	/* --- Identificador de objeto --- */
+	| OBJECTID:n
+	    {: RESULT = new object(curr_lineno(), n); :}
+
+	/* --- Literais --- */
+	| INT_CONST:i
+	    {: RESULT = new int_const(curr_lineno(), i); :}
+	| STR_CONST:s
+	    {: RESULT = new string_const(curr_lineno(), s); :}
+	| BOOL_CONST:b
+	    {: RESULT = new bool_const(curr_lineno(), b); :}
+	;
+
+/*
+ * Lista de expressões dentro de um bloco { e1; e2; ... }.
+ * Deve ter pelo menos uma expressão (sintaxe: [expr;]+).
+ *
+ * Recuperação: expressão malformada → pula até SEMI, continua.
+ */
+block_expr_list
+	/* primeira expressão */
+	::= expr:e SEMI
+	    {: RESULT = (new Expressions(curr_lineno())).appendElement(e); :}
+	/* expressões subsequentes */
+	| block_expr_list:el expr:e SEMI
+	    {: RESULT = el.appendElement(e); :}
+	/* recuperação: erro na primeira expressão do bloco */
+	| error SEMI
+	    {: RESULT = new Expressions(curr_lineno()); :}
+	/* recuperação: erro em expressão subsequente */
+	| block_expr_list:el error SEMI
+	    {: RESULT = el; :}
+	;
+
+/*
+ * Lista de argumentos de dispatch (pode ser vazia).
+ * Separados por vírgula.
+ */
+expr_list
+	/* zero argumentos */
+	::= /* vazio */
+	    {: RESULT = new Expressions(curr_lineno()); :}
+	/* um argumento */
+	| expr:e
+	    {: RESULT = (new Expressions(curr_lineno())).appendElement(e); :}
+	/* múltiplos argumentos */
+	| expr_list:al COMMA expr:e
+	    {: RESULT = al.appendElement(e); :}
+	;
+
+/*
+ * Lista de branches do case (deve ter pelo menos um).
+ */
+case_list
+	::= case_branch:b
+	    {: RESULT = (new Cases(curr_lineno())).appendElement(b); :}
+	| case_list:cl case_branch:b
+	    {: RESULT = cl.appendElement(b); :}
+	;
+
+/* Branch do case: id : TYPE => expr ; */
+case_branch
+	::= OBJECTID:n COLON TYPEID:t DARROW expr:e SEMI
+	    {: RESULT = new branch(curr_lineno(), n, t, e); :}
+	;
+
+/*
+ * Let com múltiplos bindings (recursão à direita).
+ *
+ * Sintaxe: let id:TYPE [<- init] [, id:TYPE [<- init]]* in body
+ *
+ * Múltiplos bindings são açúcar sintático para lets aninhados:
+ *   let x:T1, y:T2 in e  ≡  let x:T1 in (let y:T2 in e)
+ *
+ * Ambiguidade "let x:T in e1 + e2":
+ *   CUP resolve por padrão com shift — "e1 + e2" fica dentro do corpo.
+ *   Comportamento correto conforme o manual do COOL.
+ *   O Makefile usa -expect 10000 para suprimir avisos desses conflitos.
+ *
+ * Recuperação: binding malformado → pula até IN ou COMMA e continua.
+ */
+let_expr
+	/* binding simples sem inicialização: id:TYPE in body */
+	::= OBJECTID:n COLON TYPEID:t IN expr:body
+	    {: RESULT = new let(curr_lineno(), n, t,
+		    new no_expr(curr_lineno()), body); :}
+
+	/* binding simples com inicialização: id:TYPE <- init in body */
+	| OBJECTID:n COLON TYPEID:t ASSIGN expr:init IN expr:body
+	    {: RESULT = new let(curr_lineno(), n, t, init, body); :}
+
+	/* múltiplos bindings sem init: id:TYPE, rest_of_let */
+	| OBJECTID:n COLON TYPEID:t COMMA let_expr:rest
+	    {: RESULT = new let(curr_lineno(), n, t,
+		    new no_expr(curr_lineno()), rest); :}
+
+	/* múltiplos bindings com init: id:TYPE <- init, rest_of_let */
+	| OBJECTID:n COLON TYPEID:t ASSIGN expr:init COMMA let_expr:rest
+	    {: RESULT = new let(curr_lineno(), n, t, init, rest); :}
+
+	/* recuperação: binding malformado antes de IN */
+	| error IN expr:body
+	    {: RESULT = body; :}
+
+	/* recuperação: binding malformado antes de COMMA */
+	| error COMMA let_expr:rest
+	    {: RESULT = rest; :}
+	;

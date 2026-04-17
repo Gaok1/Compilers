@@ -1,0 +1,160 @@
+#name "test.cl"
+#9 CLASS
+#9 CLASS
+#9 CLASS
+#9 CLASS
+#10 ELSE
+#10 ELSE
+#10 ELSE
+#10 ELSE
+#11 FI
+#11 FI
+#11 FI
+#11 FI
+#12 IF
+#12 IF
+#12 IF
+#12 IF
+#13 IN
+#13 IN
+#13 IN
+#13 IN
+#14 INHERITS
+#14 INHERITS
+#14 INHERITS
+#14 INHERITS
+#15 ISVOID
+#15 ISVOID
+#15 ISVOID
+#15 ISVOID
+#16 LET
+#16 LET
+#16 LET
+#16 LET
+#17 LOOP
+#17 LOOP
+#17 LOOP
+#17 LOOP
+#18 POOL
+#18 POOL
+#18 POOL
+#18 POOL
+#19 THEN
+#19 THEN
+#19 THEN
+#19 THEN
+#20 WHILE
+#20 WHILE
+#20 WHILE
+#20 WHILE
+#21 CASE
+#21 CASE
+#21 CASE
+#21 CASE
+#22 ESAC
+#22 ESAC
+#22 ESAC
+#22 ESAC
+#23 NEW
+#23 NEW
+#23 NEW
+#23 NEW
+#24 OF
+#24 OF
+#24 OF
+#24 OF
+#25 NOT
+#25 NOT
+#25 NOT
+#25 NOT
+#33 BOOL_CONST true
+#33 BOOL_CONST true
+#33 BOOL_CONST true
+#34 BOOL_CONST false
+#34 BOOL_CONST false
+#34 BOOL_CONST false
+#35 TYPEID True
+#35 TYPEID TRUE
+#36 TYPEID False
+#36 TYPEID FALSE
+#42 INT_CONST 0
+#42 INT_CONST 1
+#42 INT_CONST 42
+#42 INT_CONST 007
+#42 INT_CONST 9999
+#42 INT_CONST 1000000
+#51 TYPEID MyClass
+#51 TYPEID Object
+#51 TYPEID IO
+#51 TYPEID String
+#51 TYPEID Int
+#51 TYPEID Bool
+#51 TYPEID SELF_TYPE
+#52 OBJECTID myVar
+#52 OBJECTID self
+#52 OBJECTID x1
+#52 OBJECTID obj_name
+#52 OBJECTID abc123
+#53 ERROR "_"
+#53 OBJECTID invalido
+#53 ERROR "_"
+#59 OBJECTID x
+#59 ASSIGN
+#59 INT_CONST 5
+#60 OBJECTID a
+#60 LE
+#60 OBJECTID b
+#61 OBJECTID c
+#61 DARROW
+#61 OBJECTID d
+#62 OBJECTID p
+#62 '+'
+#62 OBJECTID q
+#62 '-'
+#62 OBJECTID r
+#62 '*'
+#62 OBJECTID s
+#62 '/'
+#62 OBJECTID t
+#63 OBJECTID u
+#63 '<'
+#63 OBJECTID v
+#64 OBJECTID w
+#64 '='
+#64 OBJECTID x
+#65 '~'
+#65 OBJECTID y
+#66 OBJECTID obj
+#66 '.'
+#66 OBJECTID method
+#67 '('
+#67 OBJECTID a
+#67 ','
+#67 OBJECTID b
+#67 ';'
+#67 OBJECTID c
+#67 ':'
+#67 OBJECTID d
+#67 ')'
+#68 '{'
+#68 OBJECTID e
+#68 '}'
+#68 '@'
+#68 OBJECTID f
+#75 STR_CONST "tab:\there"
+#78 STR_CONST "newline:\nhere"
+#81 STR_CONST "backspace:\bhere"
+#84 STR_CONST "formfeed:\fhere"
+#87 STR_CONST "escaped quote: \""
+#90 STR_CONST "escaped backslash: \\"
+#93 STR_CONST "escaped outros: a z 9"
+#97 STR_CONST "linha continuada: \ncontinua aqui"
+#100 STR_CONST ""
+#103 STR_CONST "hello world"
+#136 ERROR "Unterminated string constant"
+#136 OBJECTID token_apos_erro_de_string
+#144 ERROR "String constant too long"
+#151 ERROR "#"
+#152 ERROR "!"
+#159 ERROR "Unmatched *)"
+#167 ERROR "EOF in comment"

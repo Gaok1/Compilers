@@ -1,0 +1,14 @@
+# Build artifacts gerados automaticamente (não commitar)
+*.class
+CoolParser.java
+TokenConstants.java
+cool.output
+cool-tree.class
+tests/good.output
+tests/bad.output
+
+# Executável e symlinks do curso
+parser
+cgen
+semant
+lexer

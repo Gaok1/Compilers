@@ -1,0 +1,12 @@
+# Build artifacts gerados automaticamente (não commitar)
+*.class
+CoolLexer.java
+cool.lex.java
+lexer
+test.output
+cool.output
+
+# Symlinks para binários do curso
+parser
+cgen
+semant

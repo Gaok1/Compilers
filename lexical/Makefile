@@ -4,7 +4,7 @@ CLASS= compiladores
 CLASSDIR= /var/tmp/cool
 LIB= -L/usr/lib -lfl
 
-SRC= cool.lex test.cl README
+SRC= cool.lex tests/test.cl README
 CSRC=	\
 	AbstractSymbol.java \
 	AbstractTable.java \
@@ -37,9 +37,9 @@ CLASSPATH := ${CUPCLASSPATH}:.:/usr/java/lib/rt.jar
 
 source : ${SRC} ${TSRC} ${LSRC} ${LIBS} ${CSRC}
 
-${OUTPUT}:	lexer test.cl
+${OUTPUT}:	lexer tests/test.cl
 	@rm -f test.output
-	-./lexer test.cl >test.output 2>&1 
+	-./lexer tests/test.cl >test.output 2>&1
 
 lexer: Makefile ${CLS}
 	@rm -f lexer
@@ -51,8 +51,8 @@ CoolLexer.java: cool.lex
 	${JLEX} $<
 	mv cool.lex.java CoolLexer.java
 
-dotest:	lexer test.cl
-	./lexer test.cl
+dotest:	lexer tests/test.cl
+	./lexer tests/test.cl
 
 ${CLS}: ${CFIL}
 	${JAVAC} -classpath ${CLASSPATH} ${CFIL}
