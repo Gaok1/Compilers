@@ -1,53 +1,47 @@
 (*
  * bad.cl: testa recuperação de erros sintáticos do parser.
  *
- * O parser deve:
- *   1. Reportar o erro com linha e nome do arquivo
- *   2. Continuar parsing após o erro (recuperar)
- *   3. Processar classes/features subsequentes corretamente
+ * Casos cobrados pelo enunciado:
+ *   1. erro em definição de classe, retomando na próxima classe
+ *   2. erro em feature, retomando na próxima feature
+ *   3. erro em binding de let, retomando no próximo binding
+ *   4. erro em expressão de bloco, continuando após o ';'
  *)
 
--- Classe válida para confirmar que o parser reinicia após erros
+-- Classe válida antes dos erros
 class ValidBefore {
     x : Int;
 };
 
--- ERRO: nome de classe começa com minúscula (b não é TYPEID)
-class b {
+-- ERRO: nome de classe inválido (OBJECTID onde se espera TYPEID)
+class badClass {
 };
 
--- Classe válida — parser deve continuar aqui após o erro acima
+-- Classe válida: confirma recuperação após erro de classe
 class ValidAfterClassError {
     y : Int;
 };
 
--- ERRO: herança de identificador com minúscula (objeto, não tipo)
-class BadInherits inherits notAType {
-    z : Int;
+-- ERRO em feature: atributo malformado
+class FeatureRecovery {
+    broken : ;
+    ok : Int;
 };
 
--- ERRO: feature sem ponto-e-vírgula no final
-class MissingSemiInFeature {
-    x : Int
-    y : Int;
+-- Classe válida depois do erro em feature
+class AfterFeatureRecovery {
+    value : Int <- 1;
 };
 
--- ERRO: método sem corpo (chave fechando faltando)
-class MissingBrace {
-    badMethod() : Int {
-        42
-    ;
-};
-
--- ERRO: let sem corpo (IN faltando)
-class BadLet {
+-- ERRO em binding de let: falta o identificador antes de ':'
+class LetBindingRecovery {
     test() : Int {
-        let x : Int <- 5
+        let : Int, y : Int <- 2 in y
     };
 };
 
--- ERRO: expressão inválida dentro de bloco
-class BadBlock {
+-- ERRO dentro de bloco: parser deve continuar até o próximo ';'
+class BlockRecovery {
     test() : Int {
         {
             42;
@@ -57,14 +51,7 @@ class BadBlock {
     };
 };
 
--- ERRO: let com binding malformado antes de COMMA
-class BadLetBinding {
-    test() : Int {
-        let : Int, y : Int <- 2 in y
-    };
-};
-
--- Classe válida ao final — parser deve chegar aqui
+-- Classe válida ao final: confirma que o parser chegou até aqui
 class Main {
     main() : Object { 0 };
 };

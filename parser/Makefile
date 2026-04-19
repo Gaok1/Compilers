@@ -49,9 +49,13 @@ CLASSPATH := ${CUPCLASSPATH}:.
 # Diretório onde javac coloca as classes compiladas via symlink
 SRCDIR := ${CLASSDIR}/src/PA${ASSN}
 
+.PHONY: all source dotest clean submit-clean
+
+all: source parser
+
 source: ${SRC} ${TSRC} ${LSRC} ${LIBS} ${CSRC}
 
-${OUTPUT}:	parser tests/good.cl tests/bad.cl
+${OUTPUT}:	source parser tests/good.cl tests/bad.cl
 	@rm -f ${OUTPUT}
 	./myparser tests/good.cl >tests/good.output 2>&1
 	-./myparser tests/bad.cl >tests/bad.output 2>&1
@@ -66,7 +70,7 @@ CoolParser.java TokenConstants.java: cool.cup
 	${CUP} -parser CoolParser -symbols TokenConstants -expect 10000 -dump -nopositions < $< >cool.output 2>&1 || { egrep '^Error at ' cool.output; false; }
 
 
-dotest:	parser tests/good.cl tests/bad.cl
+dotest:	source parser tests/good.cl tests/bad.cl
 	@echo "\nRunning parser on good.cl\n"
 	-./myparser tests/good.cl
 	@echo "\nRunning parser on bad.cl\n"

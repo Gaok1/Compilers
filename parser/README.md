@@ -11,15 +11,18 @@ O arquivo que escrevemos é o `cool.cup`. Ele descreve as regras da gramática e
 ## Como rodar
 
 ```bash
-# compilar
-make
+# preparar os links/scripts do framework
+make source
+
+# gerar o parser e compilar as classes Java
+make parser
 
 # testar
 make dotest
 
 # ou individualmente
-./myparser tests/good.cl    # deve printar a AST sem erros
-./myparser tests/bad.cl     # deve printar os erros e tentar continuar
+./myparser tests/good.cl
+./myparser tests/bad.cl
 ```
 
 ---
@@ -30,8 +33,8 @@ make dotest
 parser/
 ├── cool.cup          ← onde escrevemos a gramática (arquivo nosso)
 ├── Makefile          ← build system (adaptado do original do curso)
-├── README.md         ← esse arquivo
-├── README            ← instruções originais do curso
+├── README            ← arquivo de entrega pedido pelo curso
+├── README.md         ← versão em Markdown com o mesmo conteúdo
 ├── tests/
 │   ├── good.cl       ← programa COOL válido pra testar
 │   └── bad.cl        ← programa com erros pra testar recuperação
@@ -46,7 +49,7 @@ parser/
 
 A maior parte da gramática foi direta: olhamos a Figura 1 do manual e traduzimos cada regra pra sintaxe do CUP. Cada regra tem uma ação semântica que chama `new NóDaAST(...)` com os valores dos símbolos. Quando o parser casa uma regra, a ação roda e coloca o nó no `RESULT`.
 
-A recuperação de erros também foi simples: o CUP tem um pseudo-terminal chamado `error`. Basta escrever `error SEMI` em uma alternativa da regra pra dizer "se der erro aqui, pula tudo até o próximo `;` e continua". Fizemos isso em quatro lugares: na classe, na feature, no let e dentro de bloco.
+A recuperação de erros também foi simples: o CUP tem um pseudo-terminal chamado `error`. Basta escrever `error SEMI` em uma alternativa da regra pra dizer "se der erro aqui, pula tudo até o próximo `;` e continua". Fizemos isso em quatro lugares: na classe, na feature, no let e dentro de bloco. No caso de `feature`, a produção retorna `null` e a lista ignora esse valor, para não inserir uma feature inválida na AST.
 
 A precedência dos operadores também foi tirada diretamente do manual (seção 11.1) — não precisamos pensar nisso, só copiar na ordem certa:
 
@@ -77,6 +80,69 @@ Os arquivos `.java` do framework são links simbólicos pra `/var/tmp/cool/src/P
 
 ---
 
+## O que o parser trata e como trata
+
+Implementamos recuperação de erro com o pseudo-terminal `error` do CUP. A estratégia é sempre a mesma: descartar tokens até um delimitador seguro e retomar o parsing a partir dali.
+
+**1. Erro em definição de classe**
+
+Regra usada:
+
+```cup
+class ::= error SEMI
+```
+
+Como funciona:
+- se a definição de uma classe ficar inválida, o parser descarta tokens até o `;` que fecha a classe
+- depois disso ele tenta ler a próxima classe do arquivo
+
+**2. Erro em feature**
+
+Regra usada:
+
+```cup
+feature ::= error SEMI
+```
+
+Como funciona:
+- o parser descarta a feature inválida até o próximo `;`
+- essa produção retorna `null`
+- a lista de features ignora esse `null`, então a AST não recebe uma feature inválida
+
+**3. Erro em binding de `let`**
+
+Regras usadas:
+
+```cup
+let_expr ::= error IN expr
+          |  error COMMA let_expr
+```
+
+Como funciona:
+- se o binding estiver quebrado antes do `in`, o parser joga fora os tokens até `in` e segue com o corpo do `let`
+- se o binding estiver quebrado antes de uma vírgula, o parser joga fora os tokens até a vírgula e tenta continuar no próximo binding
+
+**4. Erro em expressão dentro de bloco**
+
+Regras usadas:
+
+```cup
+block_expr_list ::= error SEMI
+                  | block_expr_list error SEMI
+```
+
+Como funciona:
+- se uma expressão do bloco estiver inválida, o parser descarta tokens até o próximo `;`
+- depois disso ele continua tentando reconhecer as expressões seguintes do mesmo bloco
+
+**Limites dessa recuperação**
+
+- Ela é local, não global. Se o contexto ao redor estiver muito quebrado, o parser pode ficar desalinhado.
+- O objetivo não é “adivinhar” o programa correto, e sim voltar a um ponto seguro para continuar relatando erros.
+- Em arquivos inválidos, o comportamento esperado é emitir mensagens de erro e encerrar com falha; a AST só é garantida para entradas válidas.
+
+---
+
 ## Testes
 
 **`good.cl`** tem exemplos de tudo que a gramática permite:
@@ -88,15 +154,12 @@ Os arquivos `.java` do framework são links simbólicos pra `/var/tmp/cool/src/P
 - `new`, `isvoid`
 - dispatch simples, estático (`@`) e encadeado
 
-**`bad.cl`** testa se o parser consegue continuar depois de erros:
-1. classe com nome em minúscula (deveria ser tipo)
-2. herança de identificador de objeto
-3. feature sem `;` no final
-4. método sem `}` de fechamento
-5. `let` sem `in`
-6. expressão inválida dentro de bloco
-7. binding de `let` malformado
+**`bad.cl`** testa os pontos de recuperação implementados:
+1. classe malformada, seguida por uma classe válida
+2. feature malformada, seguida por outra feature/classe válidas
+3. binding de `let` malformado antes de `,` ou `in`
+4. expressão inválida dentro de bloco, com continuação após `;`
 
-**Resultado:**
+**Resultado esperado:**
 - `good.cl` → AST gerada, sem erros
-- `bad.cl` → 5 erros reportados com número de linha, parser continua após cada um
+- `bad.cl` → erros reportados com número de linha e parser continua até os próximos pontos de sincronização

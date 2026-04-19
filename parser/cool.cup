@@ -192,7 +192,7 @@ feature_list
 	    {: RESULT = new Features(curr_lineno()); :}
 	/* acumula features */
 	| feature_list:fl feature:f
-	    {: RESULT = fl.appendElement(f); :}
+	    {: RESULT = (f == null) ? fl : fl.appendElement(f); :}
 	;
 
 /*
@@ -215,6 +215,7 @@ feature
 	    {: RESULT = new attr(curr_lineno(), n, t, new no_expr(curr_lineno())); :}
 	/* recuperação: feature malformada */
 	| error SEMI
+	    {: RESULT = null; :}
 	;
 
 /*

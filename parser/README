@@ -1,0 +1,85 @@
+# TP-03: Análise Sintática (Parser COOL)
+
+## O que foi feito
+
+Implementamos um parser para a linguagem COOL usando **CUP**. O arquivo principal da entrega é o `cool.cup`, que descreve a gramática e constrói a AST por meio das ações semânticas.
+
+Também adicionamos testes em `tests/good.cl` e `tests/bad.cl` para validar programas válidos e recuperação de erros sintáticos.
+
+## Como compilar e rodar
+
+```bash
+make source
+make parser
+
+./myparser tests/good.cl
+./myparser tests/bad.cl
+```
+
+Para rodar o ciclo de teste do diretório:
+
+```bash
+make dotest
+```
+
+## Decisões principais
+
+- A gramática foi escrita a partir da Figura 1 do manual de referência do COOL.
+- As ações semânticas constroem nós concretos da AST, como `programc`, `class_c`, `method`, `attr`, `let`, `dispatch` e demais expressões.
+- A recuperação de erros foi implementada com o pseudo-terminal `error` em definição de classe, feature, bindings de `let` e expressões em bloco.
+- Em `feature`, quando ocorre erro, a produção retorna `null` e a lista de features ignora esse valor. Assim a AST não recebe uma feature inválida.
+- O `let` com múltiplos bindings é convertido em `let`s aninhados com recursão à direita.
+
+## O que é tratado e como é tratado
+
+O parser tenta se recuperar de alguns erros sintáticos usando pontos de sincronização simples. A ideia é descartar tokens até um delimitador seguro e continuar o parsing dali.
+
+Casos tratados:
+
+- Definição de classe malformada:
+  a produção `class ::= error SEMI` descarta a classe ruim até o `;` que fecha a definição e permite retomar na próxima classe.
+- Feature malformada dentro de uma classe:
+  a produção `feature ::= error SEMI` descarta a feature até o `;`. O resultado dessa produção é `null`, e `feature_list` ignora esse valor para não inserir lixo na AST.
+- Binding malformado em `let` antes de `in`:
+  a produção `let_expr ::= error IN expr` descarta o binding ruim até encontrar `in` e segue com o corpo do `let`.
+- Binding malformado em `let` antes de `,`:
+  a produção `let_expr ::= error COMMA let_expr` descarta o binding ruim até a vírgula e tenta continuar a partir do próximo binding.
+- Expressão malformada dentro de bloco:
+  as produções `block_expr_list ::= error SEMI` e `block_expr_list ::= block_expr_list error SEMI` descartam a expressão inválida até o próximo `;` e continuam com as expressões seguintes do bloco.
+
+Limites conhecidos:
+
+- A recuperação é local. Se a estrutura em volta do erro estiver muito quebrada, o parser pode se desalinhar e encerrar com menos mensagens do que o número de problemas reais no arquivo.
+- O parser não tenta “consertar” a AST de entradas inválidas. Ele apenas tenta voltar a um ponto estável para continuar encontrando erros.
+- Em entradas válidas, a saída esperada é a AST completa. Em entradas inválidas, a saída esperada são mensagens de erro; não há garantia de AST útil.
+
+## Casos de teste
+
+`good.cl` cobre:
+- classes com e sem herança
+- atributos com e sem inicialização
+- métodos com diferentes aridades
+- `if`, `while`, bloco, `let`, `case`
+- operadores aritméticos, comparação, `not`, `isvoid`, `new`
+- dispatch simples, estático e encadeado
+
+`bad.cl` cobre:
+- erro em definição de classe com recuperação na próxima classe
+- erro em feature com recuperação na próxima feature
+- erro em binding de `let` com recuperação no próximo binding
+- erro em expressão dentro de bloco com continuação após `;`
+
+Na prática, esses testes verificam os pontos de sincronização mais importantes do trabalho:
+- `SEMI` para classes e features
+- `COMMA` e `IN` para bindings de `let`
+- `SEMI` para expressões dentro de bloco
+
+## Onde está o trabalho do aluno
+
+Os arquivos principais da entrega são:
+- `cool.cup`
+- `tests/good.cl`
+- `tests/bad.cl`
+- `README`
+
+Os demais arquivos Java e scripts auxiliares são, em sua maior parte, fornecidos pelo framework da disciplina.
