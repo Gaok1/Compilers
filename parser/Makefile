@@ -7,7 +7,7 @@ AR= ar
 ARCHIVE_NEW= -cr
 RANLIB= ar -qs
 
-SRC= cool.cup tests/good.cl tests/bad.cl README
+SRC= cool.cup tests/good.cl tests/bad.cl tests/bad_class_feature.cl tests/bad_let_block.cl README
 CSRC= \
 	AbstractSymbol.java \
 	AbstractTable.java \
@@ -38,7 +38,9 @@ CFIL= ${CSRC} ${CGEN}
 HFIL= cool-tree.h cool-tree.handcode.h 
 LSRC= Makefile
 CLS= ${CFIL:.java=.class}
-OUTPUT= tests/good.output tests/bad.output
+BAD_TESTS= tests/bad.cl tests/bad_class_feature.cl tests/bad_let_block.cl
+BAD_OUTPUTS= ${BAD_TESTS:.cl=.output}
+OUTPUT= tests/good.output ${BAD_OUTPUTS}
 
 JAVAC := javac
 CUP := java -jar ${CLASSDIR}/lib/java-cup-11a.jar
@@ -55,10 +57,13 @@ all: source parser
 
 source: ${SRC} ${TSRC} ${LSRC} ${LIBS} ${CSRC}
 
-${OUTPUT}:	source parser tests/good.cl tests/bad.cl
+${OUTPUT}:	source parser tests/good.cl ${BAD_TESTS}
 	@rm -f ${OUTPUT}
 	./myparser tests/good.cl >tests/good.output 2>&1
-	-./myparser tests/bad.cl >tests/bad.output 2>&1
+	@for test in ${BAD_TESTS}; do \
+		out=$${test%.cl}.output; \
+		./myparser $$test >$$out 2>&1 || true; \
+	done
 
 parser: Makefile ${CLS}
 	@rm -f parser
@@ -70,11 +75,13 @@ CoolParser.java TokenConstants.java: cool.cup
 	${CUP} -parser CoolParser -symbols TokenConstants -expect 10000 -dump -nopositions < $< >cool.output 2>&1 || { egrep '^Error at ' cool.output; false; }
 
 
-dotest:	source parser tests/good.cl tests/bad.cl
+dotest:	source parser tests/good.cl ${BAD_TESTS}
 	@echo "\nRunning parser on good.cl\n"
 	-./myparser tests/good.cl
-	@echo "\nRunning parser on bad.cl\n"
-	-./myparser tests/bad.cl
+	@for test in ${BAD_TESTS}; do \
+		echo "\nRunning parser on $$(basename $$test)\n"; \
+		./myparser $$test || true; \
+	done
 
 ## cool-tree.class is not a real class file, but we need to have it
 ## for dependency tracking.

@@ -23,6 +23,8 @@ make dotest
 # ou individualmente
 ./myparser tests/good.cl
 ./myparser tests/bad.cl
+./myparser tests/bad_class_feature.cl
+./myparser tests/bad_let_block.cl
 ```
 
 ---
@@ -36,8 +38,10 @@ parser/
 ├── README            ← arquivo de entrega pedido pelo curso
 ├── README.md         ← versão em Markdown com o mesmo conteúdo
 ├── tests/
-│   ├── good.cl       ← programa COOL válido pra testar
-│   └── bad.cl        ← programa com erros pra testar recuperação
+│   ├── good.cl                 ← programa COOL válido pra testar
+│   ├── bad.cl                  ← suíte original de recuperação
+│   ├── bad_class_feature.cl    ← erros de classe e feature
+│   └── bad_let_block.cl        ← erros de let e bloco
 ├── notes/            ← pasta pra anotações
 ├── [*.java]          ← arquivos do curso (symlinks pra /var/tmp/cool/src/PA3J/)
 └── .gitignore
@@ -154,12 +158,11 @@ Como funciona:
 - `new`, `isvoid`
 - dispatch simples, estático (`@`) e encadeado
 
-**`bad.cl`** testa os pontos de recuperação implementados:
-1. classe malformada, seguida por uma classe válida
-2. feature malformada, seguida por outra feature/classe válidas
-3. binding de `let` malformado antes de `,` ou `in`
-4. expressão inválida dentro de bloco, com continuação após `;`
+**Arquivos `bad*.cl`** testam os pontos de recuperação implementados:
+1. `bad.cl` cobre a suíte original com classe, feature, `let` e bloco
+2. `bad_class_feature.cl` reforça recuperação de classe e de feature com mais de um formato de erro
+3. `bad_let_block.cl` cobre os dois caminhos de recuperação do `let` (`COMMA` e `IN`) e um bloco com continuação após `;`
 
 **Resultado esperado:**
 - `good.cl` → AST gerada, sem erros
-- `bad.cl` → erros reportados com número de linha e parser continua até os próximos pontos de sincronização
+- `bad*.cl` → erros reportados com número de linha e parser continua até os próximos pontos de sincronização

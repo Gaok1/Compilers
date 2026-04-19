@@ -15,7 +15,7 @@ O foco desta etapa foi:
 
 - `parser/cool.cup` — gramática do parser e ações semânticas
 - `parser/tests/good.cl` — entrada válida para teste
-- `parser/tests/bad.cl` — entrada com erros sintáticos para testar recuperação
+- `parser/tests/bad*.cl` — entradas com erros sintáticos para testar recuperação
 - `parser/README.md` — documentação completa da entrega
 
 ## Como compilar e rodar
@@ -25,6 +25,8 @@ cd parser
 make parser
 ./myparser tests/good.cl
 ./myparser tests/bad.cl
+./myparser tests/bad_class_feature.cl
+./myparser tests/bad_let_block.cl
 ```
 
 Para executar o conjunto de testes previsto no diretório do parser:
@@ -55,6 +57,16 @@ Incluímos pontos de sincronização com o símbolo especial `error` do CUP em c
 - listas de argumentos e expressões
 
 Quando encontra erro, o parser descarta tokens até um delimitador seguro, reporta a falha com número de linha e tenta continuar. A recuperação é local: ela melhora o relatório de erros, mas não garante reconstrução perfeita da estrutura restante.
+
+## Testes
+
+Além do `good.cl`, o parser agora tem uma pequena suíte de arquivos inválidos separada por cenário:
+
+- `bad.cl` — suíte geral original
+- `bad_class_feature.cl` — erros em classe e feature
+- `bad_let_block.cl` — erros em `let` e bloco
+
+O alvo `make dotest` no diretório `parser/` executa todos eles.
 
 ## Estrutura do repositório
 
