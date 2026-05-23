@@ -1,0 +1,12 @@
+# Compiled Java classes
+*.class
+
+# Output files gerados pelo gmake dotest
+*.output
+
+# Script gerado pelo Makefile
+semant
+
+# Pacote de entrega
+*.tar.gz
+*.u

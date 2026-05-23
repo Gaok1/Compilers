@@ -171,3 +171,187 @@ Instructions
 
 Write-up for PA4
 ----------------
+
+Visao Geral
+-----------
+
+Nossa implementacao do analisador semantico esta dividida principalmente em dois
+arquivos: ClassTable.java e cool-tree.java. A ideia central foi separar bem as
+responsabilidades: ClassTable cuida de tudo que envolve o grafo de heranca e
+consultas sobre tipos e metodos, enquanto cool-tree.java faz a travessia da AST
+e o type-checking em si.
+
+Dividimos a analise em dois passos, como sugerido na especificacao. No primeiro
+passo construimos e validamos o grafo de heranca antes de tentar verificar qualquer
+tipo, porque nao faz sentido checar tipos se a hierarquia de classes esta quebrada.
+No segundo passo percorremos cada classe fazendo o type-checking de atributos,
+metodos e expressoes.
+
+
+Estruturas de Dados
+-------------------
+
+A principal estrutura que adicionamos em ClassTable foi um HashMap<AbstractSymbol,
+class_> chamado classMap. Optamos por um HashMap porque precisamos buscar classes
+pelo nome constantemente (para verificar heranca, resolver tipos em expressoes,
+etc.) e o HashMap da complexidade O(1) para essas buscas. As cinco classes basicas
+(Object, IO, Int, Bool, String) sao inseridas nesse mapa logo no inicio, junto com
+as classes definidas pelo usuario.
+
+Para o gerenciamento de escopo durante o type-checking, usamos o SymbolTable
+fornecido pelo curso, que implementa uma pilha de escopos com enterScope/exitScope.
+Isso foi util porque a linguagem Cool tem quatro formas de introduzir identificadores
+(atributos, parametros formais, let e branches de case) e precisamos empilhar e
+desempilhar escopos conforme entramos e saimos de cada construcao.
+
+Adicionamos alguns metodos auxiliares importantes em ClassTable:
+
+- isSubtype(child, ancestor, currentClass): sobe a cadeia de heranca de child ate
+  encontrar ancestor ou chegar em Object sem encontrar. Resolve SELF_TYPE para
+  currentClass antes de comparar.
+
+- lub(t1, t2, currentClass): calcula o ancestral comum mais proximo entre dois tipos.
+  Construimos a lista de ancestrais de t1 e depois subimos a cadeia de t2 ate
+  encontrar o primeiro que aparece nessa lista. Usamos isso em if/then/else e em
+  case para determinar o tipo resultante.
+
+- getMethodEnv(className) e getAttrEnv(className): retornam mapas com todos os
+  metodos e atributos visiveis de uma classe, incluindo os herdados. Implementamos
+  de forma recursiva subindo ate Object. Isso foi necessario para verificar override
+  e para popular o escopo inicial de cada classe no Passo 2.
+
+
+Passo 1: Construcao e Validacao do Grafo de Heranca
+----------------------------------------------------
+
+O construtor ClassTable(Classes cls) executa as verificacoes em uma ordem especifica
+que faz sentido para detectar erros corretamente:
+
+Primeiro registramos todas as classes do usuario, verificando se alguma tenta
+redefinir uma classe basica ou se ha nomes duplicados. Fazemos isso antes de verificar
+a heranca porque precisamos saber quais classes existem para checar se o pai de uma
+classe esta definido.
+
+Depois verificamos as restricoes de heranca: em Cool e proibido herdar de Int, Bool
+ou String, e o pai tem que estar definido. Se o pai nao existe, nao da pra verificar
+ciclos direito, entao reportamos o erro e paramos.
+
+A deteccao de ciclos foi feita com um HashSet: para cada classe, subimos a cadeia de
+heranca guardando os nos visitados. Se encontrarmos um no repetido antes de chegar em
+Object, encontramos um ciclo.
+
+Por fim verificamos se existe a classe Main com o metodo main() sem parametros.
+
+Se qualquer erro ocorrer nessa fase, chamamos System.exit(1) imediatamente, pois a
+especificacao permite isso e nao faz sentido tentar fazer type-checking com uma
+hierarquia malformada.
+
+
+Passo 2: Type-Checking
+----------------------
+
+A partir de program.semant(), iteramos sobre todas as classes chamando class_.semant(ct).
+Para cada classe, criamos um SymbolTable novo e adicionamos 'self : SELF_TYPE' e todos
+os atributos herdados ao escopo inicial. Isso e importante porque os atributos da
+classe pai precisam estar visiveis dentro da classe filha.
+
+Para os atributos proprios da classe, verificamos se o nome e 'self' (proibido),
+se o tipo declarado existe, e se algum atributo herdado esta sendo redefinido (Cool
+nao permite override de atributos, apenas de metodos).
+
+Para cada metodo, abrimos um novo escopo e adicionamos os parametros formais.
+Verificamos tambem se o metodo esta sobrescrevendo algum metodo do pai: nesse caso,
+os tipos dos parametros e o tipo de retorno precisam ser identicos (invariantes em
+Cool). Depois fazemos o type-check do corpo e verificamos se o tipo resultante
+conforma com o tipo de retorno declarado.
+
+Cada subclasse de Expression implementa um metodo typecheck(ct, currentClass, objEnv)
+que verifica as restricoes semanticas, anota o campo type via set_type() e retorna
+o tipo inferido. Seguimos as regras do manual do Cool para cada construcao.
+
+Um ponto que precisou de cuidado especial foi o dispatch: quando o tipo do receptor
+e SELF_TYPE, precisamos resolve-lo para o nome da classe atual antes de buscar o
+metodo. Se o tipo de retorno do metodo e SELF_TYPE, o resultado do dispatch e o
+tipo estatico do receptor (nao o SELF_TYPE em si), o que preserva o tipo correto
+em contextos de heranca.
+
+
+Tratamento de SELF_TYPE
+-----------------------
+
+SELF_TYPE aparece em varios lugares e precisou de tratamento cuidadoso. A regra
+geral que adotamos foi: sempre que precisamos comparar ou subir na hierarquia,
+resolvemos SELF_TYPE para o nome da classe atual (currentClass.getName()) antes
+de qualquer operacao. Isso vale tanto em isSubtype() quanto em lub().
+
+A excecao e em dispatch: se o tipo de retorno do metodo e SELF_TYPE, o resultado
+preserva o tipo estatico do receptor (e nao simplesmente currentClass), porque o
+receptor pode ser de um subtipo da classe onde o metodo foi definido.
+
+
+Recuperacao de Erros
+--------------------
+
+Quando uma expressao tem tipo invalido, atribuimos o tipo Object e continuamos a
+analise. Isso segue o mesmo comportamento do coolc de referencia e evita que um
+erro em um lugar cause uma cascata de erros falsos no restante do codigo.
+
+A unica situacao onde interrompemos com System.exit(1) e quando o grafo de heranca
+esta malformado, pois sem uma hierarquia valida nao da para fazer nenhuma checagem
+de tipos de forma confiavel.
+
+
+Casos de Teste
+--------------
+
+good.cl foi organizado em 12 classes, cada uma testando um aspecto diferente da
+semantica do Cool:
+
+- Animal/Dog/Puppy: heranca em tres niveis com override de metodo. Quisemos garantir
+  que o analisador aceita override com a mesma assinatura e que metodos herdados
+  ficam acessiveis nos subtipos.
+
+- TypesDemo: atributos dos quatro tipos basicos com inicializacao. Verifica que
+  atribuicoes compativeis sao aceitas.
+
+- Copyable/CopyChild: SELF_TYPE como tipo de retorno de metodo, como resultado de
+  'new SELF_TYPE', e o uso de 'self' como expressao. Esse foi um dos pontos mais
+  complicados de acertar.
+
+- MathOps: todas as operacoes aritmeticas e comparacoes com tipos corretos (Int).
+
+- BoolOps: operador 'not' e comparacao = entre dois Bool, que e legal.
+
+- LetDemo: let aninhado onde a variavel interna usa a externa na inicializacao,
+  e let sem inicializacao com posterior atribuicao.
+
+- CaseDemo: case com quatro branches de tipos diferentes, verificando que o tipo
+  resultante e o LUB de todos os branches.
+
+- LoopDemo: while com condicao Bool e corpo que atualiza uma variavel.
+
+- DispatchDemo: dispatch normal, static dispatch e dispatch direto em expressao new,
+  todos retornando o tipo correto.
+
+- IsVoidDemo: isvoid com objeto nao-nulo e com variavel nao inicializada (void).
+
+- IODemo: heranca de IO e uso dos metodos out_string e in_int.
+
+- Main: classe obrigatoria que combina heranca/polimorfismo, let, case, dispatch e
+  SELF_TYPE num contexto realista.
+
+bad.cl foi construido com classes auxiliares simples (Base, BaseWithParam, etc.) e
+uma classe Main grande que concentra os erros de expressao. Essa organizacao foi
+necessaria porque erros de heranca causam halt imediato e nao podem estar no mesmo
+arquivo que erros de tipo (que sao recuperaveis). Os 29 erros cobrem:
+
+- Problemas de override (tipo de retorno errado, tipo de parametro errado).
+- Uso invalido de 'self' (como atributo, parametro e variavel de let).
+- Tipos nao definidos em atributos, parametros, retorno e let.
+- Inicializacoes incompativeis de atributos.
+- Erros de expressao: identificador nao declarado, atribuicao a self, aritmetica
+  com Bool/String, 'not' em Int, '~' em Bool, comparacoes ilegais, predicados
+  de if/while com tipo errado, dispatch com metodo inexistente, numero errado
+  de argumentos, argumento de tipo errado, static dispatch com tipo invalido,
+  new de classe indefinida.
+
