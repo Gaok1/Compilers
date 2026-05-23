@@ -1,0 +1,35 @@
+# Build artifacts gerados automaticamente (não commitar)
+*.class
+good.output
+bad.output
+
+# Executável + symlinks do framework do curso
+semant
+lexer
+parser
+cgen
+mysemant
+mycoolc
+symtab-example
+cool-tree.aps
+ASTConstants.java
+ASTLexer.java
+ASTParser.java
+AbstractSymbol.java
+AbstractTable.java
+BoolConst.java
+CgenSupport.java
+Flags.java
+IdSymbol.java
+IdTable.java
+IntSymbol.java
+IntTable.java
+ListNode.java
+Semant.java
+StringSymbol.java
+StringTable.java
+SymbolTable.java
+SymtabExample.java
+TokenConstants.java
+TreeNode.java
+Utilities.java

@@ -1,3 +1,36 @@
+# Compiladores — COOL
+
+Repositório dos trabalhos práticos da disciplina de Compiladores,
+implementando incrementalmente um compilador para a linguagem COOL.
+
+| TP | Fase | Diretório | Documentação |
+|----|------|-----------|--------------|
+| 02 | Análise léxica | `lexical/` | `lexical/README.md` |
+| 03 | Análise sintática (parser + AST) | `parser/` | `parser/README.md` |
+| 04 | Análise semântica (type-check) | `semantic/` | `semantic/README.md` |
+
+## TP-04 — Análise Semântica
+
+O `semantic/` contém o analisador semântico em Java (PA4J). Ele:
+
+- monta o grafo de herança das classes do usuário + básicas (`Object`, `IO`, `Int`, `Bool`, `String`);
+- valida restrições estruturais (redefinição, herança ilegal, ciclo, `Main` ausente);
+- faz o type-check de cada expressão segundo o manual de COOL e anota a AST com tipos.
+
+Saída de `./mysemant good.cl` e `./mysemant bad.cl` é **diff-zero**
+contra o `semant` de referência. Para rodar:
+
+```bash
+cd semantic
+make semant
+make dotest
+```
+
+Detalhes (decisões, escopos, SELF_TYPE, supressão de cascata, testes)
+em `semantic/README.md`.
+
+---
+
 # TP03 — Parser da Linguagem COOL
 
 ## O que foi feito
@@ -74,6 +107,7 @@ O alvo `make dotest` no diretório `parser/` executa todos eles.
 .
 ├── lexical/   # TP02: analisador léxico
 ├── parser/    # TP03: analisador sintático
+├── semantic/  # TP04: analisador semântico
 └── docs/      # enunciados e material de apoio
 ```
 

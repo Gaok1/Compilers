@@ -171,3 +171,113 @@ Instructions
 
 Write-up for PA4
 ----------------
+
+Integrantes: Luis Phillip, Pedro Malta, Fernanda Rodrigues, Arthur Oliveira.
+
+O que foi feito
+~~~~~~~~~~~~~~~
+
+Implementamos a analise semantica do COOL em Java (PA4J). O ponto de
+entrada e program.semant() em cool-tree.java, que delega para a classe
+ClassTable. A analise tem duas passadas:
+
+  1. Construcao do grafo de heranca e verificacao estrutural
+     (redefinicao de classe, heranca ilegal, pai inexistente, ciclo,
+     Main com main()). Se falha aqui, abortamos antes da fase 2 para
+     nao emitir erros derivados.
+
+  2. Type-check de cada classe. Para cada classe abrimos um escopo
+     externo com 'self' e os atributos herdados, e um escopo interno
+     com os atributos proprios. Depois fazemos uma sub-passada
+     estrutural dos metodos (override) e uma sub-passada de
+     expressoes (init de atributo + corpo de metodo). Cada expressao
+     e tipada por um metodo checkXxx em ClassTable.java e decorada
+     via set_type, conforme exigido pela interface com o gerador de
+     codigo.
+
+Decisoes de design
+~~~~~~~~~~~~~~~~~~
+
+- Concentramos o type-check em um visitor com 'instanceof' dentro de
+  ClassTable.java, em vez de espalhar metodos por cool-tree.java.
+  Mantem cool-tree.java praticamente intocado e deixa toda a logica
+  de tipos em um arquivo so.
+
+- SELF_TYPE: implementamos as quatro regras de conformancia do manual
+  (SELF_TYPE_C <= SELF_TYPE_C, SELF_TYPE_C <= T se C <= T, T nunca
+  conforma a SELF_TYPE, e <= no grafo de heranca caso contrario).
+  O lub preserva SELF_TYPE so quando ambos sao o mesmo SELF_TYPE_C;
+  do contrario resolve para a classe corrente e calcula o LCA.
+
+- Escopos: dois por classe (externo: self + herdados; interno: proprios)
+  para distinguir 'multiply defined' (probe no escopo interno) de
+  'attribute of an inherited class' (lookup encontrou no externo).
+  Metodos abrem um terceiro escopo com os formais; let e case branch
+  abrem escopos curtos para seus respectivos corpos.
+
+- Supressao de cascata: quando o tipo declarado de um atributo/let/
+  retorno de metodo nao existe, reportamos o erro raiz mas pulamos a
+  verificacao de conformidade subsequente, replicando o comportamento
+  do compilador de referencia. Mesmo principio para static dispatch:
+  se o receptor nao conforma ao tipo alvo, nao tentamos achar o
+  metodo no tipo alvo (evita 'undefined method' redundante).
+
+Testes
+~~~~~~
+
+good.cl exercita: heranca com override, SELF_TYPE em retorno e new,
+dispatch dinamico e estatico (@Type), if/let/case/while, aritmetica,
+relacionais, igualdade, not, ~, isvoid, IO basico, blocos.
+
+bad.cl exercita 35 erros de tipo em um unico arquivo estruturalmente
+valido: atributos (5 erros), metodos (7 erros), identificadores e
+atribuicao (3), controle (2), operadores (5), dispatch (3), static
+dispatch (2), new (1), let (3), case (3).
+
+Os bonus bad_inherit.cl e bad_cycle.cl cobrem erros estruturais
+(redefinicao de classe, heranca de Bool, pai inexistente, ciclo) que
+abortam a compilacao antes do type-check e por isso nao cabem em
+bad.cl.
+
+Por que acreditamos que esta correto
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Comparamos a saida do nosso mysemant com a do compilador de
+referencia (/var/tmp/cool/lib/.x86_64/semant) em good.cl e bad.cl:
+o diff e vazio em ambos os casos. As 35 mensagens de bad.cl saem na
+mesma ordem que a referencia, com o mesmo texto. Em good.cl a AST
+anotada e identica byte a byte.
+
+Alem dos casos basicos, temos uma suite ampliada de testes em
+semantic/tests/ com 14 arquivos .cl cobrindo:
+
+  good_self_type.cl       SELF_TYPE no dispatch (self.foo vs (new T).foo)
+  good_let_defaults.cl    let sem inicializador (valores default)
+  good_recursion.cl       metodo recursivo + tipo recursivo (lista ligada)
+  good_deep_inherit.cl    heranca 5 niveis com overrides intercalados
+  good_string_basic.cl    metodos da classe String (length/concat/substr)
+  good_complex_lub.cl     LUB em if/case, incluindo branch com self
+  bad_inherit_self.cl     ciclo de heranca de 1 no (A inherits A)
+  bad_no_main.cl          ausencia da classe Main
+  bad_main_args.cl        Main.main com argumentos
+  bad_cascade.cl          erros em cadeia em dispatches encadeados
+  bad_self_misuse.cl      todos os 5 usos proibidos de 'self'
+  bad_override_signature  4 violacoes diferentes de override
+  bad_inherit.cl          erros estruturais variados
+  bad_cycle.cl            ciclo A -> B -> C -> A
+
+A suite passa 14/14 contra o semant de referencia. O script
+tests/run_tests.sh roda tudo automaticamente.
+
+Bugs descobertos via essa suite, todos ja corrigidos:
+  1. mensagem do main(args) saia na linha do metodo, devia ser na
+     linha da classe Main (alterado de semantError(m) para
+     semantError(main));
+  2. override com retorno e aridade diferentes emitia 2 mensagens
+     em vez de 1 — a referencia prioriza retorno > aridade > tipo
+     de formal; reorganizamos checkOverrideSignature seguindo essa
+     ordem;
+  3. mensagem "parameter type X is different from original type Y"
+     tinha ponto final no fim em nossa versao, mas nao na referencia.
+
+Ver README.md para a versao com formatacao e exemplos.
