@@ -140,6 +140,20 @@ seleção do ramo certo no `case` e os três aborts. Cada `.cl` tem um
 golden `.out` gerado pelo `coolc`, e `make test` (ou `tests/run.sh`)
 compila com o nosso gerador, roda no SPIM e compara.
 
+Casos incluídos na bateria do TP05:
+
+- `tests/arith.cl` — operações aritméticas e comparações sobre `Int`.
+- `tests/control.cl` — `if`, `while`, `let`, blocos e manipulação de variáveis locais.
+- `tests/dispatch.cl` — despacho dinâmico, despacho estático e retorno com `SELF_TYPE`.
+- `tests/case.cl` — escolha do ramo mais específico em expressões `case`.
+- `tests/strings.cl` — operações com `String` e uso de IO.
+- `tests/abort_dispatch.cl` — erro de execução em dispatch sobre `void`.
+- `tests/abort_casevoid.cl` — erro de execução em `case` sobre `void`.
+- `tests/abort_nomatch.cl` — erro de execução em `case` sem ramo compatível.
+
+Essa bateria foi montada para cobrir tanto o caminho normal da geração
+de código quanto os três aborts obrigatórios exigidos pelo enunciado.
+
 Além disso, rodamos os 15 exemplos do curso (`hello_world`, `primes`,
 `list`, `complex`, `new_complex`, `cells`, `sort_list`, `book_list`,
 `graph`, `cool`, `lam`, `hairyscary`, `life`, `palindrome`, `atoi`) com
