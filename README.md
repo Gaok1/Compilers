@@ -19,6 +19,9 @@ COOL: define *class tags*, layout de objetos, *prototype objects*,
 corpos dos métodos do usuário. Trata os três aborts exigidos
 (despacho/`case` sobre `void` e `case` sem ramo).
 
+Enunciado e material de apoio em `docs/05-tp-geracao-de-codigo.pdf`,
+`docs/cool-manual.pdf` e `docs/00-configuracoes-iniciais.pdf`.
+
 A saída foi validada **byte a byte** contra o compilador de referência
 `coolc` em 15 exemplos do curso. Para rodar:
 
