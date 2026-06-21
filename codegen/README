@@ -1,0 +1,312 @@
+README file for Programming Assignment 5  (Java edition)
+=======================================================
+
+Your directory should now contain the following files:
+
+ ASTConstants.java    -> [course dir]/src/PA5J/ASTConstants.java
+ ASTLexer.java	      -> [course dir]/src/PA5J/ASTLexer.java
+ ASTParser.java	      -> [course dir]/src/PA5J/ASTParser.java
+ AbstractSymbol.java  -> [course dir]/src/PA5J/AbstractSymbol.java
+ AbstractTable.java   -> [course dir]/src/PA5J/AbstractTable.java
+ BoolConst.java
+ Cgen.java	      -> [course dir]/src/PA5J/Cgen.java
+ CgenClassTable.java
+ CgenNode.java
+ CgenSupport.java
+ ClassTable.java      -> [course dir]/src/PA5J/ClassTable.java
+ Flags.java	      -> [course dir]/src/PA5J/Flags.java
+ IdSymbol.java	      -> [course dir]/src/PA5J/IdSymbol.java
+ IdTable.java	      -> [course dir]/src/PA5J/IdTable.java
+ IntSymbol.java
+ IntTable.java	      -> [course dir]/src/PA5J/IntTable.java
+ ListNode.java	      -> [course dir]/src/PA5J/ListNode.java
+ Makefile	      -> [course dir]/assignments/PA5J/Makefile
+ README
+ StringSymbol.java
+ StringTable.java     -> [course dir]/src/PA5J/StringTable.java
+ SymbolTable.java     -> [course dir]/src/PA5J/SymbolTable.java
+ SymtabExample.java   -> [course dir]/src/PA5J/SymtabExample.java
+ TokenConstants.java  -> [course dir]/src/PA5J/TokenConstants.java
+ TreeConstants.java
+ TreeNode.java        -> [course dir]/src/PA5J/TreeNode.java
+ Utilities.java	      -> [course dir]/src/PA5J/Utilities.java
+ cool-tree.aps	      -> [course dir]/src/PA5J/cool-tree.aps
+ cool-tree.java
+ example.cl
+
+	The Makefile contains targets for compiling and running your
+	program, as well as handing it in. DO NOT MODIFY.
+
+	The README contains this info. Part of the assignment is to
+	fill the README with the write-up for your project. You should
+	explain design decisions, explain why your code is correct,
+	and why your test cases are adequate. It is part of the
+	assignment to clearly and concisely explain things in text as
+	well as to comment your code. Just edit this file.
+
+	In example.cl you should write a correct Cool program which
+	tests as many aspects of the code generator as possible. It
+	should pass your code generator, and running spim on the
+	generated output should run the program correctly.
+
+	CgenClassTable.java CgenNode.java are the skeleton files for
+	the code generator. These skeletons are much larger than the
+	ones for previous assignments.  The skeletons provides three
+	components of the code generator:
+
+		- functions to build the inheritance graph; (we supply
+		  this in case you didn't get this working for PA4)
+
+		- functions to emit global data and constants;
+		 
+	You should work to understand this code, and it will help you
+        write the rest of the code generator.
+
+        TreeNode.java and ListNode.java contain definitions used by
+        the tree package. DO NOT MODIFY.
+
+        cool-tree.java specifies and give an implementation of Cool
+        ASTs (see the README for PA3 and the "Cool Tour").  In this
+        assignment, you will need to complete the code generating
+        methods for all Cool expression nodes.
+
+	BoolConst.java, IntSymbol.java, and StringSymbol.java are used
+        to manage constants in Cool programs.  You will need to
+        complete the method for generating constant definitions in
+        each of these classes.
+
+	CgenSupport.java is general support code for the code
+	generator.  You can add functions and constants as you see
+	fit, but do not modify anything that's already there.  This
+	class also serves as a placeholder for a bunch of constants as
+	well as functions to emit spim instructions (we supply these
+	to save you some tedious coding).
+
+	TreeConstants.java defined some useful symbol constants.  You
+	may add some of your own, if you wish.
+
+	ASTLexer.java, ASTParser.java, and ASTConstants.java implement
+	a lexer and a parser for reading text representation of ASTs
+	from console in the format produced by the parser phase. DO
+	NOT MODIFY.
+
+	Cgen.java supplies the driver for the compiler. You should not
+        modify this code.  The script mycoolc can pass any of the
+        standard flags to the code generator; for this assignment, -c
+        (code generator debug) may be useful as it sets a global
+        variable cgen_debug to true (1).  If you want your code
+        generator to print debug information when the option is set,
+        write your debug code in the following format:
+
+	      if (cgen_debug)
+	      {
+		...
+	      }
+
+	SymbolTable.java contains a symbol table implementation. Read
+	the comments in the file and look at the example in
+	SymtabExample.java.  You are not required to use this code,
+	but you may find it useful. DO NOT MODIFY.
+
+Instructions
+------------
+
+	To compile your compiler and code generator type:
+
+	% gmake cgen
+
+	To test your compiler, type:
+
+	% ./mycoolc [-o output filename] <file1.cl> <file2.cl> ...
+
+	This command parses all the cool files given on the command
+	line, passes them through the semantic checker, and then hands
+	the program AST to your code generator.
+
+	To run your compiler on the file example.cl, type:
+
+	% gmake dotest
+
+	To run the produced code:
+
+	% spim -file file1.s  /* or the output filename you chose */
+	
+	To turnin your work type:
+
+	% gmake submit-clean
+
+	And run the "submit" program following the instructions on the
+	course web page.
+	
+ 	You may turn in the assignment as many times as you like.
+ 	However, only the last version will be retained for grading.
+
+	If you change architectures you must issue
+
+	% gmake clean
+
+	when you switch from one type of machine to the other.  If at
+	some point you get weird errors from the linker, you probably
+	forgot this step.
+
+	GOOD LUCK!
+
+---8<------8<------8<------8<---cut here---8<------8<------8<------8<---
+
+Write-up for PA5
+----------------
+
+
+Integrantes: Luis Phillip, Pedro Malta, Fernanda Rodrigues, Arthur
+Oliveira.
+
+O gerador recebe a AST ja tipada pela fase semantica (lida da entrada
+padrao pelo Cgen/ASTParser) e produz assembly MIPS que roda no SPIM com
+o runtime de COOL (trap.handler). Ele trabalha em duas passadas, como o
+enunciado sugere: a primeira decide o layout (tags de classe, offset
+dos atributos, tabelas de despacho) e a segunda emite o codigo.
+
+Tudo roda dentro de uma unica instancia de CgenClassTable. Como os
+metodos code(PrintStream) da AST so recebem o stream, eles alcancam o
+contexto (classe atual, ambiente de variaveis, contador de rotulos) por
+CgenClassTable.instance.
+
+
+Tags de classe e o case
+-----------------------
+
+Os tags sao atribuidos numa travessia em pre-ordem da arvore de heranca
+(assignTags). Assim a subarvore de uma classe C ocupa um intervalo
+contiguo de tags [C.classTag, C.maxChildTag], e o case vira uma simples
+comparacao de faixa: um objeto de tag t casa com o ramo de tipo C se, e
+so se, C.classTag <= t <= C.maxChildTag. Os ramos sao testados do tag
+maior para o menor para que o ancestral mais especifico seja escolhido
+primeiro (a faixa de um ancestral contem a dos descendentes).
+
+Os tags de Int, Bool e String descobertos aqui sao gravados nos rotulos
+globais _int_tag/_bool_tag/_string_tag, dos quais o runtime depende (por
+exemplo no equality_test).
+
+
+Layout de objetos
+-----------------
+
+O cabecalho tem as 3 palavras de praxe (tag, tamanho em palavras,
+ponteiro para a dispatch table) seguidas dos atributos. A lista de
+atributos de uma classe e a do pai mais os atributos declarados nela,
+nessa ordem, entao o offset de um atributo herdado nunca muda nos
+descendentes.
+
+Os prototype objects sao emitidos de forma generica: cada atributo
+recebe o valor default do seu tipo declarado (int_const 0, bool false,
+string vazia, ou void/0); os inicializadores de verdade rodam no _init.
+Esse mesmo codigo generico produz corretamente Int_protObj,
+Bool_protObj e String_protObj, sem tratamento especial.
+
+
+Dispatch tables
+---------------
+
+Para cada classe, a tabela de metodos comeca como copia da do pai. Uma
+redefinicao mantem o slot original (so troca a classe que fornece a
+implementacao) e um metodo novo entra no fim. Logo o offset de um metodo
+e estavel entre uma classe e todos os seus descendentes, que e o que o
+despacho dinamico precisa.
+
+Os metodos das classes basicas (Object, IO, Int, Bool, String) nao sao
+gerados: as implementacoes estao no runtime (Object.copy, IO.out_string,
+String.concat, ...), e a dispatch table apenas aponta para esses
+rotulos externos.
+
+
+Convencao de chamada
+--------------------
+
+Os argumentos sao avaliados e empilhados da esquerda para a direita; o
+receptor (self) e avaliado por ultimo e fica em $a0. O prologo
+(emitMethodEntry) salva $fp, $s0 (self) e $ra, instala o novo $fp e
+copia $a0 para $s0. Depois do prologo:
+
+  0($fp) = $ra salvo,  4($fp) = $s0 salvo,  8($fp) = $fp salvo
+  formal k (base 0) fica em $fp com offset de palavra (nargs - k + 2)
+  temporarios (let/case) ficam abaixo de $fp, em offsets negativos
+
+O epilogo restaura os tres registradores, desempilha o frame mais os
+nargs argumentos e faz jr $ra. O $s0 e preservado por toda chamada
+(inclusive por Object.copy), entao self esta sempre disponivel.
+
+As variaveis sao resolvidas por um SymbolTable de VarLoc (registrador +
+offset): atributos sao relativos a $s0; formais e temporarios, a $fp.
+Cada let ou ramo de case empilha seu valor, abre um escopo com a ligacao
+e o desfaz no fim. Como todo acesso e relativo a $fp, variacoes
+transitorias de $sp (avaliar subexpressoes, empilhar argumentos) nao
+afetam os offsets.
+
+
+Expressoes
+----------
+
+Aritmetica (+ - * /): avalia os operandos, copia (Object.copy) um Int
+para servir de resultado, opera sobre os valores crus (offset 3) e
+guarda no novo objeto. Divisao por zero fica para o SPIM. Comparacoes
+(< <=) comparam os valores crus e carregam bool_const1/0. Em "=",
+ponteiros iguais ja dao true (atalho inline com beq) e, senao, chamamos
+equality_test, que compara o conteudo de Int/Bool/String. new T copia
+T_protObj e chama T_init; new SELF_TYPE usa class_objTab[tag] para achar
+prototype e init da classe dinamica. O despacho dinamico carrega a
+dispatch table do receptor (o offset do metodo vem do tipo estatico, e
+SELF_TYPE vira a classe atual); o estatico (e@T.m) usa direto T_dispTab.
+
+
+Erros de execucao
+-----------------
+
+Os tres erros exigidos sao checados antes do uso: despacho sobre void
+chama _dispatch_abort (a0 = nome do arquivo, $t1 = linha); case sobre
+void chama _case_abort2 (mesmos argumentos); case sem ramo valido chama
+_case_abort (a0 = objeto). Divisao por zero fica para o SPIM; substring
+invalida e estouro de memoria sao do runtime, como diz o enunciado.
+
+
+Coletor de lixo
+---------------
+
+O default e sem coletor. Para suportar -g, as escritas em atributos
+(assign e _init) emitem _GenGC_Assign quando o coletor esta ligado; no
+default essa chamada nao e gerada.
+
+
+Detalhe de build
+----------------
+
+O esqueleto do PA5J vem inconsistente: o parser fixo (ASTParser.java) e
+o ClassTable.java constroem nos chamados programc/class_c/formalc,
+enquanto os arquivos editaveis usavam program/class_/formal. Para
+compilar e ficar coerente com o parser, renomeamos esses tres nos para a
+forma com "c" nos arquivos editaveis. Alem disso, o javac moderno grava
+o .class ao lado do .java de origem; como os arquivos de suporte sao
+symlinks, foi preciso compilar com "-d ." (mesma adaptacao do TP-03 e
+TP-04), e por isso o Makefile local acrescenta "-d .".
+
+
+Testes
+------
+
+O example.cl exercita heranca e despacho dinamico, despacho estatico
+(e@Tipo.m), SELF_TYPE, atributos com inicializador e a cadeia de _init,
+recursao (fatorial), while/let/if, case sobre o tipo dinamico, isvoid,
+metodos de String e IO.
+
+A pasta tests/ tem 8 casos focados (aritmetica, controle de fluxo,
+despacho, case, strings e os tres aborts), com golden gerado pelo coolc
+de referencia e um runner (tests/run.sh, ou "make test") que compila com
+o nosso gerador, roda no SPIM e compara. Como validacao extra,
+comparamos a saida dos 15 exemplos do curso (hello_world, primes, list,
+complex, new_complex, cells, sort_list, book_list, graph, cool, lam,
+hairyscary, life, palindrome, atoi) com a do coolc; todas identicas.
+
+Como rodar:
+
+    make cgen
+    ./mycoolc example.cl
+    spim -exception_file /var/tmp/cool/lib/trap.handler -file example.s

@@ -8,6 +8,29 @@ implementando incrementalmente um compilador para a linguagem COOL.
 | 02 | Análise léxica | `lexical/` | `lexical/README.md` |
 | 03 | Análise sintática (parser + AST) | `parser/` | `parser/README.md` |
 | 04 | Análise semântica (type-check) | `semantic/` | `semantic/README.md` |
+| 05 | Geração de código (MIPS) | `codegen/` | `codegen/README.md` |
+
+## TP-05 — Geração de Código
+
+O `codegen/` contém o gerador de código em Java (PA5J). A partir da AST
+já tipada, ele emite assembly MIPS que roda no SPIM com o runtime de
+COOL: define *class tags*, layout de objetos, *prototype objects*,
+`class_nameTab`/`class_objTab`, dispatch tables, métodos `_init` e os
+corpos dos métodos do usuário. Trata os três aborts exigidos
+(despacho/`case` sobre `void` e `case` sem ramo).
+
+A saída foi validada **byte a byte** contra o compilador de referência
+`coolc` em 15 exemplos do curso. Para rodar:
+
+```bash
+cd codegen
+make cgen
+./mycoolc example.cl
+spim -exception_file /var/tmp/cool/lib/trap.handler -file example.s
+```
+
+Detalhes das decisões de projeto em `codegen/README` (entrega) e
+`codegen/README.md`.
 
 ## TP-04 — Análise Semântica
 

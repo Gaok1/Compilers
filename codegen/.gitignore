@@ -1,0 +1,30 @@
+# Build artifacts
+*.class
+*.s
+cgen
+example.output
+
+# Symlinks de suporte do curso (gerados por `make source`)
+lexer
+parser
+semant
+mycoolc
+cool-tree.aps
+ASTConstants.java
+ASTLexer.java
+ASTParser.java
+AbstractSymbol.java
+AbstractTable.java
+Cgen.java
+ClassTable.java
+Flags.java
+IdSymbol.java
+IdTable.java
+IntTable.java
+ListNode.java
+StringTable.java
+SymbolTable.java
+SymtabExample.java
+TokenConstants.java
+TreeNode.java
+Utilities.java
